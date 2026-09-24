@@ -475,6 +475,14 @@
             </button>
           </div>
 
+          <!-- 모르는 문제 넘기기 -->
+          <div id="quiz-skip-box" class="flex justify-center pt-1">
+            <button type="button" onclick="skipQuestion()" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 border border-dashed border-slate-300 dark:border-slate-600 hover:text-brand-600 hover:border-brand-500 flex items-center gap-1.5 transition-all">
+              <i data-lucide="skip-forward" class="w-3.5 h-3.5"></i>
+              <span>모르겠어요 (정답 보고 넘기기)</span>
+            </button>
+          </div>
+
           <!-- 채점 결과 및 해설 박스 -->
           <div id="quiz-feedback-box" class="hidden p-4 rounded-2xl border space-y-2 text-xs sm:text-sm">
             <div id="quiz-feedback-title" class="font-black text-sm flex items-center gap-1.5"></div>
@@ -4351,6 +4359,7 @@
       oxBox.classList.add('hidden');
       document.getElementById('quiz-feedback-box').classList.add('hidden');
       document.getElementById('quiz-next-box').classList.add('hidden');
+      document.getElementById('quiz-skip-box').classList.remove('hidden');
       currentResolvedType = resolvedType;
 
       if (resolvedType === 'ox') {
@@ -4411,6 +4420,16 @@
     }
 
     function handleTimeOut() {
+      revealAnswerAsWrong("시간 초과", "⏰ 시간 초과! 오답 처리되었습니다.");
+    }
+
+    // 모르는 문제 넘기기: 정답과 해설을 보여 주고 오답노트에 기록
+    function skipQuestion() {
+      revealAnswerAsWrong("모름 (넘김)", "정답을 확인하고 오답노트에 담았습니다.");
+    }
+
+    // 정답을 공개하고 오답으로 처리 (시간 초과 · 넘기기 공용)
+    function revealAnswerAsWrong(userSub, toastMsg) {
       if (answerLocked) return;
       const term = activeQuizList[currentQuizIdx];
       if (!term) return;
@@ -4430,8 +4449,8 @@
           }
         });
       }
-      showToast("⏰ 시간 초과! 오답 처리되었습니다.");
-      processAnswer(false, "시간 초과", correctSub);
+      showToast(toastMsg);
+      processAnswer(false, userSub, correctSub);
     }
 
     // 클립 토글
@@ -4512,6 +4531,7 @@
       if (answerLocked) return;
       answerLocked = true;
       clearInterval(timerInterval);
+      document.getElementById('quiz-skip-box').classList.add('hidden');
       const term = activeQuizList[currentQuizIdx];
       const feedbackBox = document.getElementById('quiz-feedback-box');
       const titleEl = document.getElementById('quiz-feedback-title');
