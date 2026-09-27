@@ -1,6 +1,6 @@
 {
-  "name": "VibeLearn 100 - 바이브코딩 · 웹 · 데이터베이스 학습 앱",
-  "short_name": "VibeLearn",
+  "name": "생성형AI용어집",
+  "short_name": "생성형AI용어집",
   "description": "바이브코딩 · 웹 · 데이터베이스 용어 사전과 퀴즈 학습 앱",
   "id": "./",
   "start_url": "./",
