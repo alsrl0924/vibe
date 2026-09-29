@@ -547,7 +547,7 @@
     <!-- [탭 3] 오답노트 보관함 (Wrong Answers View) -->
     <!-- ----------------------------------------- -->
     <section id="view-wrong" class="hidden space-y-4">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 class="text-xl sm:text-2xl font-black flex items-center gap-2">
             <i data-lucide="book-x" class="w-6 h-6 text-rose-500"></i>
@@ -555,7 +555,7 @@
           </h2>
           <p class="text-xs text-slate-500">틀렸던 문제들이 자동으로 저장됩니다. 다시 풀어서 맞히면 졸업 처리됩니다!</p>
         </div>
-        <button id="solve-all-wrongs-btn" onclick="startSolveWrongsOnly()" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+        <button id="solve-all-wrongs-btn" onclick="startSolveWrongsOnly()" class="self-start sm:self-auto flex-shrink-0 whitespace-nowrap px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
           <i data-lucide="play" class="w-3.5 h-3.5"></i>
           <span>오답만 모아 풀기</span>
         </button>
@@ -576,17 +576,17 @@
     <!-- [탭 4] 클립 문항 보관함 (Clipped Questions View) -->
     <!-- ----------------------------------------- -->
     <section id="view-clipped" class="hidden space-y-4">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 class="text-xl sm:text-2xl font-black flex items-center gap-2">
             <i data-lucide="paperclip" class="w-6 h-6 text-amber-500"></i>
-            <span>클립(스크랩)한 문항 보관함</span>
+            <span>클립 보관함</span>
           </h2>
-          <p class="text-xs text-slate-500">퀴즈 중 중요하거나 헷갈려서 📌 클립해둔 특별 문항들입니다.</p>
+          <p class="text-xs text-slate-500">용어사전이나 퀴즈에서 📌 클립한 용어가 모입니다. 다시 읽어 보거나 모아서 풀어 보세요.</p>
         </div>
-        <button id="solve-clipped-btn" onclick="startSolveClippedOnly()" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+        <button id="solve-clipped-btn" onclick="startSolveClippedOnly()" class="self-start sm:self-auto flex-shrink-0 whitespace-nowrap px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
           <i data-lucide="play" class="w-3.5 h-3.5"></i>
-          <span>클립 문항만 풀기</span>
+          <span>클립한 문제만 풀기</span>
         </button>
       </div>
 
@@ -596,8 +596,8 @@
         <div class="w-12 h-12 mx-auto rounded-full bg-amber-50 dark:bg-amber-950 flex items-center justify-center text-amber-500">
           <i data-lucide="paperclip" class="w-6 h-6"></i>
         </div>
-        <h3 class="font-bold text-sm">클립한 문제가 없습니다.</h3>
-        <p class="text-xs text-slate-400">퀴즈 풀이 중 우측 상단 📌 클립 버튼을 누르면 여기에 저장됩니다.</p>
+        <h3 class="font-bold text-sm">클립한 용어가 없습니다.</h3>
+        <p class="text-xs text-slate-400">용어 카드나 퀴즈 화면 오른쪽 위의 📌 버튼을 누르면 여기에 모입니다.</p>
       </div>
     </section>
 
@@ -3715,7 +3715,6 @@
     let userState = {
       wrongMap: {},      // { termId: wrongCount }
       clippedSet: new Set(), // Set of termId
-      bookmarkedSet: new Set(),
       memorizedSet: new Set(), // 암기 카드에서 '외웠음' 표시한 용어
       streakDays: 1,
       lastStudyDate: "",
@@ -3731,7 +3730,8 @@
           const parsed = JSON.parse(raw);
           userState.wrongMap = parsed.wrongMap || {};
           userState.clippedSet = new Set(parsed.clippedList || []);
-          userState.bookmarkedSet = new Set(parsed.bookmarkedList || []);
+          // 예전 즐겨찾기(별) 기록은 클립으로 옮겨서 보존
+          (parsed.bookmarkedList || []).forEach(id => userState.clippedSet.add(id));
           userState.memorizedSet = new Set(parsed.memorizedList || []);
           userState.streakDays = parsed.streakDays || 1;
           userState.lastStudyDate = parsed.lastStudyDate || "";
@@ -3741,7 +3741,6 @@
           // 초기화
           userState.wrongMap = {};
           userState.clippedSet = new Set();
-          userState.bookmarkedSet = new Set();
           userState.memorizedSet = new Set();
           userState.streakDays = 1;
           userState.lastStudyDate = "";
@@ -3760,7 +3759,6 @@
         const payload = {
           wrongMap: userState.wrongMap,
           clippedList: Array.from(userState.clippedSet),
-          bookmarkedList: Array.from(userState.bookmarkedSet),
           memorizedList: Array.from(userState.memorizedSet),
           streakDays: userState.streakDays,
           lastStudyDate: userState.lastStudyDate,
@@ -3858,7 +3856,7 @@
         const mobBtn = document.getElementById(`mob-nav-${t}`);
         if (mobBtn) {
           if (t === tabId) {
-            mobBtn.className = "flex flex-col items-center justify-center gap-1 text-brand-600 dark:text-brand-400";
+            mobBtn.className = "relative flex flex-col items-center justify-center gap-1 text-brand-600 dark:text-brand-400";
           } else {
             mobBtn.className = "relative flex flex-col items-center justify-center gap-1 text-slate-400";
           }
@@ -4008,7 +4006,6 @@
     }
 
     function createCardHtml(term) {
-      const isBookmarked = userState.bookmarkedSet.has(term.id);
       const isClipped = userState.clippedSet.has(term.id);
       const isExpanded = expandedCardIds.has(term.id);
       const wrongCount = userState.wrongMap[term.id] || 0;
@@ -4030,11 +4027,8 @@
               </div>
 
               <div class="flex items-center gap-1">
-                <button onclick="toggleClip(${term.id}, event)" class="p-1 text-slate-400 hover:text-amber-500" title="문항 클립">
-                  <i data-lucide="paperclip" class="w-4 h-4 ${isClipped ? 'text-amber-500 font-bold' : ''}"></i>
-                </button>
-                <button onclick="toggleBookmark(${term.id}, event)" class="p-1 text-slate-400 hover:text-amber-500" title="용어 즐겨찾기">
-                  <i data-lucide="star" class="w-4 h-4 ${isBookmarked ? 'fill-amber-500 text-amber-500' : ''}"></i>
+                <button onclick="toggleClip(${term.id}, event)" class="p-1.5 rounded-lg ${isClipped ? 'bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400' : 'text-slate-400 hover:text-amber-500'}" title="${isClipped ? '클립 해제' : '클립하기 (클립 탭에 모아 보기)'}">
+                  <i data-lucide="paperclip" class="w-4 h-4"></i>
                 </button>
               </div>
             </div>
@@ -4086,19 +4080,6 @@
     function expandAllCards(expand) {
       if (expand) GLOSSARY_DATA.forEach(t => expandedCardIds.add(t.id));
       else expandedCardIds.clear();
-      renderCards();
-    }
-
-    function toggleBookmark(termId, event) {
-      if (event) event.stopPropagation();
-      if (userState.bookmarkedSet.has(termId)) {
-        userState.bookmarkedSet.delete(termId);
-        showToast("즐겨찾기에서 제거되었습니다.");
-      } else {
-        userState.bookmarkedSet.add(termId);
-        showToast("⭐ 즐겨찾기에 등록되었습니다!");
-      }
-      saveUserData();
       renderCards();
     }
 
@@ -4170,6 +4151,15 @@
     let answerLocked = false;        // 한 문제에 답이 두 번 채점되지 않도록 잠금
     let currentResolvedType = 'choice'; // 현재 문제 유형 (choice / short / ox)
     let isExamMode = false;          // 시험 대비 모드 (OX 제외 · 초성 힌트 숨김)
+
+    // 객관식 보기 표시용 텍스트
+    // 4개 보기 모두에 괄호 설명이 있을 때만 그대로 보여 주고,
+    // 일부에만 있으면 모든 보기에서 괄호 부분을 떼어 정답이 드러나지 않게 함 (원본 데이터는 그대로 유지)
+    const TRAILING_PAREN = /\s*\([^()]*\)\s*$/;
+    function getDisplayOptions(options) {
+      const allHaveParen = options.every(o => TRAILING_PAREN.test(o));
+      return allHaveParen ? [...options] : options.map(o => o.replace(TRAILING_PAREN, '').trim());
+    }
 
     // 편향 없는 무작위 섞기 (Fisher–Yates)
     function shuffleArray(arr) {
@@ -4245,7 +4235,7 @@
       } else if (effectiveMode === 'clipped_only') {
         pool = GLOSSARY_DATA.filter(t => userState.clippedSet.has(t.id));
         if (pool.length === 0) {
-          alert("클립(스크랩)한 문제가 없습니다! 퀴즈 중 📌 클립 버튼을 눌러보세요.");
+          alert("클립한 용어가 없습니다! 용어 카드나 퀴즈 화면의 📌 버튼을 눌러 보세요.");
           return;
         }
       } else {
@@ -4382,7 +4372,8 @@
         choiceBox.classList.remove('hidden');
         // 보기 순서를 매번 섞어서 표시 (data-idx에는 원래 보기 번호를 보관)
         const order = shuffleArray(term.quiz.options.map((_, i) => i));
-        choiceBox.innerHTML = order.map((origIdx, pos) => ({ opt: term.quiz.options[origIdx], origIdx, pos })).map(({ opt, origIdx, pos }) => `
+        const displayOptions = getDisplayOptions(term.quiz.options);
+        choiceBox.innerHTML = order.map((origIdx, pos) => ({ opt: displayOptions[origIdx], origIdx, pos })).map(({ opt, origIdx, pos }) => `
           <button onclick="submitChoiceAnswer(${origIdx})" data-idx="${origIdx}" class="quiz-opt-btn w-full p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 text-left font-medium text-xs sm:text-sm flex items-center justify-between hover:border-brand-500 transition-all">
             <span>${escapeHtml(opt)}</span>
             <span class="w-5 h-5 rounded-full border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs text-slate-400 font-bold">${pos + 1}</span>
