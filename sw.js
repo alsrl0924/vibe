@@ -1,5 +1,5 @@
 // 생성형AI용어집 서비스 워커: 한 번 접속하면 이후에는 인터넷 없이도 실행되도록 파일을 저장해 둡니다.
-const CACHE = 'vibelearn-v6'; // 파일 구성이 바뀌면 숫자를 올려 주세요
+const CACHE = 'vibelearn-v7'; // 파일 구성이 바뀌면 숫자를 올려 주세요
 const CORE = [
   './', './index.html', './manifest.json',
   './css/app.css', './js/lucide.min.js', './fonts/PretendardVariable.woff2',
