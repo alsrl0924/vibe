@@ -166,9 +166,16 @@
           </div>
 
           <select id="sort-select" onchange="handleSortChange()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm rounded-xl px-3 py-2">
-            <option value="rank_asc">🔥 중요도순 (1~100)</option>
-            <option value="name_ko_asc">가나다순 (한글)</option>
-            <option value="name_en_asc">알파벳순 (A-Z)</option>
+            <optgroup label="정렬">
+              <option value="rank_asc">🔥 중요도순 (1~100)</option>
+              <option value="name_ko_asc">가나다순 (한글)</option>
+              <option value="name_en_asc">알파벳순 (A-Z)</option>
+            </optgroup>
+            <optgroup label="모아 보기">
+              <option value="clip_only">📌 클립한 용어만</option>
+              <option value="wrong_rank">❌ 틀린 용어만 (중요도순)</option>
+              <option value="wrong_count">❌ 틀린 용어만 (많이 틀린 순)</option>
+            </optgroup>
           </select>
         </div>
 
@@ -185,7 +192,7 @@
       <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4"></div>
       
       <div id="no-results-state" class="hidden text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-3">
-        <p class="text-sm text-slate-500">일치하는 용어가 없습니다.</p>
+        <p id="no-results-text" class="text-sm text-slate-500">일치하는 용어가 없습니다.</p>
         <button onclick="resetFilters()" class="px-4 py-2 bg-brand-600 text-white rounded-xl text-xs font-bold">필터 초기화</button>
       </div>
       </div><!-- /glossary-list-mode -->
@@ -226,7 +233,12 @@
         <div id="flash-play" class="hidden space-y-3">
           <div class="flex items-center justify-between text-xs font-bold px-1">
             <span class="text-slate-500">카드 <span id="flash-idx" class="text-brand-600 dark:text-brand-400">1</span> / <span id="flash-total">10</span></span>
-            <button onclick="exitFlashcards()" class="text-slate-400 hover:text-rose-500 font-medium">그만하기</button>
+            <div class="flex items-center gap-3">
+              <button id="flash-clip-btn" type="button" onclick="toggleFlashClip()" class="px-2.5 py-1.5 rounded-lg flex items-center gap-1 border border-slate-200 dark:border-slate-700 text-slate-500" title="이 용어 클립하기">
+                <i data-lucide="paperclip" class="w-3.5 h-3.5"></i><span id="flash-clip-text">클립</span>
+              </button>
+              <button onclick="exitFlashcards()" class="text-slate-400 hover:text-rose-500 font-medium">그만하기</button>
+            </div>
           </div>
           <div class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
             <div id="flash-progress-bar" class="h-full bg-brand-600 rounded-full transition-all" style="width:0%"></div>
@@ -3939,6 +3951,9 @@
     function getFilteredTerms() {
       return GLOSSARY_DATA.filter(item => {
         if (currentCategory !== 'all' && item.category !== currentCategory) return false;
+        // 모아 보기: 클립한 용어만 / 틀린 용어만
+        if (currentSort === 'clip_only' && !userState.clippedSet.has(item.id)) return false;
+        if ((currentSort === 'wrong_rank' || currentSort === 'wrong_count') && !(userState.wrongMap[item.id] > 0)) return false;
         if (currentSearchQuery) {
           const q = currentSearchQuery;
           const matchKo = item.term_ko.toLowerCase().includes(q);
@@ -3953,7 +3968,12 @@
         if (currentSort === 'rank_asc') return a.rank - b.rank;
         if (currentSort === 'name_ko_asc') return a.term_ko.localeCompare(b.term_ko, 'ko');
         if (currentSort === 'name_en_asc') return a.term_en.localeCompare(b.term_en, 'en');
-        return 0;
+        if (currentSort === 'wrong_count') {
+          const diff = (userState.wrongMap[b.id] || 0) - (userState.wrongMap[a.id] || 0);
+          return diff !== 0 ? diff : a.rank - b.rank; // 틀린 횟수가 같으면 중요도순
+        }
+        return a.rank - b.rank; // clip_only, wrong_rank 는 중요도순
+
       });
     }
 
@@ -3967,6 +3987,13 @@
       if (terms.length === 0) {
         grid.innerHTML = '';
         noRes.classList.remove('hidden');
+        const noText = document.getElementById('no-results-text');
+        const narrowed = currentCategory !== 'all' || currentSearchQuery;
+        if (noText) {
+          if (currentSort === 'clip_only' && !narrowed) noText.innerText = "아직 클립한 용어가 없습니다. 카드 오른쪽 위 📌 버튼으로 클립해 보세요.";
+          else if ((currentSort === 'wrong_rank' || currentSort === 'wrong_count') && !narrowed) noText.innerText = "아직 틀린 용어가 없습니다. 퀴즈를 풀면 틀린 용어가 여기에 모입니다.";
+          else noText.innerText = "일치하는 용어가 없습니다.";
+        }
         if (statusText) statusText.innerText = "검색 결과 없음";
         return;
       }
@@ -4889,6 +4916,7 @@
       back.classList.add('hidden');
       document.getElementById('flash-tap-text').innerText = '눌러서 정답 확인';
       document.getElementById('flash-card').classList.remove('border-brand-500');
+      updateFlashClipBtn();
       lucide.createIcons();
     }
 
@@ -4898,6 +4926,26 @@
       document.getElementById('flash-back').classList.toggle('hidden', !flashFlipped);
       document.getElementById('flash-tap-text').innerText = flashFlipped ? '눌러서 정답 숨기기' : '눌러서 정답 확인';
       document.getElementById('flash-card').classList.toggle('border-brand-500', flashFlipped);
+    }
+
+    // 현재 카드의 클립 상태 표시
+    function updateFlashClipBtn() {
+      const term = flashDeck[flashIdx];
+      const btn = document.getElementById('flash-clip-btn');
+      if (!term || !btn) return;
+      const clipped = userState.clippedSet.has(term.id);
+      btn.className = clipped
+        ? "px-2.5 py-1.5 rounded-lg flex items-center gap-1 border border-amber-300 dark:border-amber-800 bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300"
+        : "px-2.5 py-1.5 rounded-lg flex items-center gap-1 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-amber-500";
+      btn.title = clipped ? "클립 해제" : "이 용어 클립하기";
+      document.getElementById('flash-clip-text').innerText = clipped ? "클립됨" : "클립";
+    }
+
+    function toggleFlashClip() {
+      const term = flashDeck[flashIdx];
+      if (!term) return;
+      toggleClip(term.id); // 저장·목록 갱신·알림은 기존 클립 기능과 동일
+      updateFlashClipBtn();
     }
 
     function nextFlashcard() {
