@@ -478,6 +478,7 @@
             <button onclick="nextQuestion()" class="w-full py-3.5 bg-slate-900 dark:bg-brand-600 text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2">
               <span>다음 문제로 넘어가기</span>
               <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              <kbd class="hidden sm:inline-block ml-1 px-1.5 py-0.5 rounded-md bg-white/15 text-[10px] font-mono font-medium">Enter ↵</kbd>
             </button>
           </div>
 
@@ -914,9 +915,9 @@
         "Hallucination"
       ],
       "hint": "ㅎㄹㅅㄴㅇㅅ (영어: H____________)",
-      "ox_question": "AI가 생성한 코드는 100% 오류가 없으며 존재하지 않는 패키지를 지어내는 일은 절대 없다.",
-      "ox_answer": false,
-      "ox_explanation": "아닙니다! AI는 환각(할루시네이션) 현상으로 인해 없는 함수나 가짜 패키지를 지어낼 수 있습니다."
+      "ox_question": "할루시네이션(환각)은 AI가 사실이 아닌 정보나 존재하지 않는 함수·패키지를 그럴듯하게 지어내는 현상이다.",
+      "ox_answer": true,
+      "ox_explanation": "정답입니다! AI가 만든 코드는 실제로 존재하는 함수와 패키지인지 반드시 확인해야 합니다."
     }
   },
   {
@@ -1178,9 +1179,7 @@
       "short_answers": [
         "인라인 편집",
         "인라인편집",
-        "inline edit",
-        "Cmd+K",
-        "Ctrl+K"
+        "inline edit"
       ],
       "hint": "ㅇㄹㅇ ㅍㅈ (영어: I_____ Edit)",
       "ox_question": "인라인 편집 단축키(Cmd+K)를 쓰면 코드를 채팅창에 복사할 필요 없이 그 자리에서 AI가 수정해준다.",
@@ -1257,7 +1256,7 @@
     "description": "법률, 의료, 특정 학교의 교무 규정 등 일반 상식만으로는 대답하기 어려운 고유 데이터를 모델 자체의 뇌세포에 영구적으로 주입하는 방법입니다.",
     "prompt_example": "선생님의 수업 피드백 말투를 모방하는 맞춤형 교육용 LLM을 만들기 위해 필요한 파인튜닝 데이터셋(JSONL) 형식 예시를 보여줘.",
     "quiz": {
-      "question": "사전 학습된 거대 AI 모델에 특정 도메인의 맞춤 데이터를 추가 학습시켜 전문성과 말투를 최적화하는 미세조정 기법을 무엇이라 할까요?",
+      "question": "사전 학습된 거대 AI 모델에 특정 도메인의 맞춤 데이터를 추가 학습시켜 전문성과 말투를 최적화하는 기법을 무엇이라 할까요?",
       "options": [
         "파인튜닝 (Fine-tuning)",
         "프롬프팅 (Prompting)",
@@ -1583,7 +1582,7 @@
     "description": "단순히 '코드 짜줘'라고 하는 것보다 '너는 세계 최고의 보안 전문가야'라고 역할을 부여하면 답변의 전문성과 디테일이 크게 상승합니다.",
     "prompt_example": "페르소나 설정: 당신은 15년 경력의 시니어 풀스택 테크 리드입니다. 코드 품질과 가독성, 성능 관점에서 아래 코드를 비평해줘.",
     "quiz": {
-      "question": "AI 모델에게 특정한 전문직 역할(페르소나)을 부여하여 해당 전문가의 시각과 어조로 답변하도록 유도하는 프롬프트 테크닉은?",
+      "question": "AI 모델에게 특정한 전문직 역할을 부여하여 해당 전문가의 시각과 어조로 답변하도록 유도하는 프롬프트 테크닉은?",
       "options": [
         "페르소나 부여 (역할 지정)",
         "토큰 제한",
@@ -1613,7 +1612,7 @@
     "description": "복잡한 수학 문제나 복잡한 알고리즘 리팩토링 시, AI가 성급하게 틀린 답을 내지 않고 단계별로 차근차근 검증하며 높은 정확도를 발휘합니다.",
     "prompt_example": "이 복잡한 정렬 알고리즘의 시간 복잡도를 계산할 때, 생각의 사슬(Chain of Thought)을 거쳐 단계별 추론 과정을 보여줘.",
     "quiz": {
-      "question": "AI 모델이 어려운 문제에 직면했을 때 최종 답변을 출력하기 전에 단계별로 깊이 생각하고 검증하는 생각의 사슬 과정을 지원하는 메커니즘은?",
+      "question": "AI 모델이 어려운 문제에 직면했을 때 최종 답변을 출력하기 전에 단계별로 깊이 생각하고 검증하는 사고 과정을 지원하는 메커니즘은?",
       "options": [
         "추론 토큰 / 생각의 사슬 (CoT)",
         "단답 모드",
@@ -1970,7 +1969,7 @@
     "description": "레고 블록에 색상이나 글자 스티커를 붙여서 넘겨주는 것에 비유됩니다. `<Card title='공지사항' />` 처럼 자식 컴포넌트에 값을 넘겨 재사용성을 극대화합니다.",
     "prompt_example": "UserCard 컴포넌트에 name, avatarUrl, role 세 가지 props를 전달받아 렌더링하는 코드를 작성해줘.",
     "quiz": {
-      "question": "React 등 컴포넌트 기반 프레임워크에서 부모 컴포넌트가 자식 컴포넌트로 데이터를 전달할 때 넘겨주는 속성 값은?",
+      "question": "React 등 컴포넌트 기반 프레임워크에서 부모 컴포넌트가 자식 컴포넌트로 데이터를 전달할 때 넘겨주는 값을 무엇이라 할까요?",
       "options": [
         "Props (프롭스)",
         "State (상태)",
@@ -2148,23 +2147,26 @@
     "description": "200은 성공(OK), 400은 잘못된 요청(Bad Request), 401/403은 권한 없음, 404는 페이지 못 찾음(Not Found), 500은 서버 내부 에러를 뜻합니다.",
     "prompt_example": "REST API 서버에서 리소스를 찾지 못했을 때 404 상태 코드와 적절한 JSON 에러 메시지를 반환하는 코드를 작성해줘.",
     "quiz": {
-      "question": "웹 브라우저가 요청한 페이지나 API 주소가 서버에 존재하지 않을 때 서버가 반환하는 가장 유명한 3자리 HTTP 에러 코드는?",
+      "question": "웹 서버가 클라이언트의 요청을 처리한 결과(성공, 리다이렉트, 클라이언트 오류, 서버 오류 등)를 200, 404, 500처럼 세 자리 숫자로 알려주는 응답 값을 무엇이라 할까요?",
       "options": [
-        "404 (Not Found)",
-        "200 (OK)",
-        "500 (Internal Server Error)",
-        "301 (Moved)"
+        "HTTP 상태 코드 (HTTP Status Code)",
+        "포트 번호 (Port Number)",
+        "IP 주소 (IP Address)",
+        "MIME 타입 (MIME Type)"
       ],
       "answer_idx": 0,
       "short_answers": [
-        "404",
-        "404 에러",
-        "404 not found"
+        "HTTP 상태 코드",
+        "HTTP 상태코드",
+        "상태 코드",
+        "상태코드",
+        "HTTP Status Code",
+        "Status Code"
       ],
-      "hint": "숫자 3자리 (4__)",
-      "ox_question": "HTTP 상태 코드 200은 서버가 요청을 성공적으로 정상 처리했음을 의미한다.",
+      "hint": "HTTP ㅅㅌ ㅋㄷ (영어: HTTP S_____ C___)",
+      "ox_question": "HTTP 상태 코드는 서버가 요청을 처리한 결과를 200, 404, 500처럼 세 자리 숫자로 알려주는 응답 값이다.",
       "ox_answer": true,
-      "ox_explanation": "정답입니다! 200 OK는 가장 대표적인 성공 응답 상태 코드입니다."
+      "ox_explanation": "정답입니다! 2xx는 성공, 3xx는 리다이렉트, 4xx는 클라이언트 오류, 5xx는 서버 오류를 뜻합니다."
     }
   },
   {
@@ -3063,7 +3065,7 @@
     "description": "데이터가 수백만 건일 때 인덱스가 없으면 처음부터 끝까지 전체를 뒤져야(Full Table Scan) 해서 엄청 느려집니다. 자주 검색되는 이메일이나 날짜 컬럼에 인덱스를 겁니다.",
     "prompt_example": "users 테이블의 email 컬럼으로 로그인 조회가 빈번할 때 조회 속도를 100배 빠르게 해주는 CREATE INDEX SQL 문을 작성해줘.",
     "quiz": {
-      "question": "책의 '찾아보기'처럼 데이터베이스 검색 속도를 비약적으로 향상시키기 위해 특정 컬럼에 설정하는 색인 구조는?",
+      "question": "책의 '찾아보기'처럼 데이터베이스 검색 속도를 비약적으로 향상시키기 위해 특정 컬럼에 설정하는 자료 구조는?",
       "options": [
         "인덱스 (Index)",
         "트랜잭션 (Transaction)",
@@ -3270,7 +3272,7 @@
     "description": "`schema.prisma` 파일 하나에 모델을 선언해두면, DB 테이블 생성부터 타입 정의까지 모든 코드가 마법처럼 자동 생성됩니다.",
     "prompt_example": "User와 Post 테이블의 1:N 관계를 정의하는 schema.prisma 모델 설계 코드를 작성해줘.",
     "quiz": {
-      "question": "Next.js 생태계에서 널리 쓰이며 강력한 타입 안정성과 schema.prisma 파일 기반 마이그레이션을 제공하는 인기 ORM 라이브러리는?",
+      "question": "Next.js 생태계에서 널리 쓰이며 강력한 타입 안정성과 전용 스키마 파일 기반 마이그레이션을 제공하는 인기 ORM 라이브러리는?",
       "options": [
         "Prisma (프리즈마)",
         "Express",
@@ -3314,9 +3316,9 @@
         "env"
       ],
       "hint": "ㅎㄱㅂㅅ (영어: .___)",
-      "ox_question": "데이터베이스 접속 비밀번호나 API 시크릿 키는 GitHub 공개 저장소 코드 안에 직접 적어두는 것이 올바른 보안 권장사항이다.",
-      "ox_answer": false,
-      "ox_explanation": "틀렸습니다! 민감한 DB 접속 정보는 소스코드에 절대 직접 적지 말고 .env 환경변수 파일로 분리하고 숨겨야 합니다."
+      "ox_question": "환경변수(.env)는 DB 접속 비밀번호나 API 시크릿 키 같은 민감한 정보를 소스코드에 직접 적지 않고 별도 파일로 분리해 보관하는 데 쓰인다.",
+      "ox_answer": true,
+      "ox_explanation": "정답입니다! .env 파일은 .gitignore에 등록해 GitHub에 올라가지 않도록 해야 합니다."
     }
   },
   {
@@ -3359,21 +3361,22 @@
     "description": "개발자조차도 사용자의 원래 비밀번호를 알아낼 수 없게 만듭니다. salt(소금)를 쳐서 레인보우 테이블 공격을 방어하는 `bcrypt`나 `Argon2`가 표준입니다.",
     "prompt_example": "회원가입 시 사용자 비밀번호를 bcrypt.hash()를 이용해 솔트를 적용하고 해시값으로 DB에 저장하는 회원가입 로직을 작성해줘.",
     "quiz": {
-      "question": "비밀번호를 데이터베이스에 보관할 때, 원래 글자로 절대 복호화할 수 없도록 단방향 암호화하는 대표적인 알고리즘 라이브러리는?",
+      "question": "비밀번호를 데이터베이스에 보관할 때, 원래 글자로 되돌릴(복호화) 수 없도록 단방향 함수로 변환하여 저장하는 보안 기법은?",
       "options": [
-        "bcrypt (비크립트)",
-        "base64",
-        "ASCII",
-        "zip"
+        "비밀번호 해싱 (Password Hashing)",
+        "대칭키 암호화 (Symmetric Encryption)",
+        "Base64 인코딩 (Base64 Encoding)",
+        "데이터 압축 (Data Compression)"
       ],
       "answer_idx": 0,
       "short_answers": [
-        "bcrypt",
-        "비크립트",
+        "비밀번호 해싱",
+        "비밀번호해싱",
         "해싱",
-        "비밀번호 해싱"
+        "Password Hashing",
+        "Hashing"
       ],
-      "hint": "ㅂㅋㄹㅌ (영어: b_____)",
+      "hint": "ㅂㅁㅂㅎ ㅎㅅ (영어: Password H______)",
       "ox_question": "비밀번호 해싱은 원본 글자로 쉽게 되돌릴(복호화) 수 있는 양방향 암호화 방식을 의미한다.",
       "ox_answer": false,
       "ox_explanation": "틀렸습니다! 비밀번호 해싱(bcrypt 등)은 절대 원본 글자로 되돌릴 수 없는 단방향(One-way) 암호화 기법입니다."
@@ -4544,6 +4547,17 @@
       // 무한 모드 10연속 달성 시 배지
       if (infiniteStreak >= 10) unlockBadge('badge_infinite_10');
     }
+
+    // 채점 후(해설이 보이는 상태)에는 Enter 키로 다음 문제로 넘어가기
+    // capture 단계에서 먼저 처리해, 단답식 입력칸의 Enter(제출)와 겹치지 않게 함
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || e.isComposing || e.repeat) return;
+      if (currentTab !== 'quiz') return;
+      if (document.getElementById('quiz-play-panel').classList.contains('hidden')) return;
+      if (document.getElementById('quiz-next-box').classList.contains('hidden')) return;
+      e.preventDefault(); // 포커스된 버튼이 함께 눌리는 것 방지
+      nextQuestion();
+    }, true);
 
     function nextQuestion() {
       currentQuizIdx++;
