@@ -1,0 +1,10 @@
+.vibe-account-button{padding:.5rem .7rem;border:1px solid #94a3b8;border-radius:.75rem;font-size:.8rem;white-space:nowrap;min-height:42px}
+#vibe-account-dialog{width:min(92vw,420px);padding:1.5rem;border-radius:1.2rem;border:1px solid #cbd5e1;background:#fff;color:#0f172a;box-shadow:0 25px 60px #0f172a44}
+#vibe-account-dialog::backdrop{background:#0f172a77}
+#vibe-account-dialog h2{font-size:1.15rem;font-weight:800;margin-bottom:.8rem}
+#vibe-account-dialog p{font-size:.85rem;line-height:1.7;margin:.6rem 0;overflow-wrap:anywhere}
+#vibe-account-dialog button{display:block;width:100%;border:1px solid #94a3b8;border-radius:.7rem;padding:.7rem;margin-top:.65rem;font-weight:600}
+#vibe-account-dialog button[hidden]{display:none}
+#vibe-account-dialog button:disabled{opacity:.5}
+#vibe-google-login{background:#4f46e5;color:#fff}
+.dark #vibe-account-dialog{background:#0f172a;color:#f1f5f9}

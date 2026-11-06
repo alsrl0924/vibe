@@ -17,6 +17,9 @@
   
   <!-- 스타일(Tailwind 미리 빌드본 + Pretendard 폰트) : 인터넷 없이도 동작하도록 로컬 파일 사용 -->
   <link rel="stylesheet" href="css/app.css" />
+  <link rel="stylesheet" href="css/cloud.css" />
+  <script src="js/progress-core.js"></script>
+  <script src="js/supabase-2.118.0.js"></script>
 
   <!-- Lucide Icons -->
   <script src="js/lucide.min.js"></script>
@@ -101,8 +104,9 @@
           </button>
         </nav>
 
-        <!-- 우측 액션: 다크모드 -->
+        <!-- 우측 액션: 로그인 및 다크모드 -->
         <div class="flex items-center gap-2">
+          <button id="vibe-auth-open" type="button" class="vibe-account-button">로그인</button>
           <!-- 다크모드 토글 -->
           <button onclick="toggleDarkMode()" aria-label="테마 변경" class="p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
             <i id="theme-icon" data-lucide="moon" class="w-5 h-5"></i>
@@ -3713,6 +3717,7 @@
       try {
         // 이전 버전(게스트 모드)에서 쌓은 기록이 있으면 그대로 이어서 사용
         const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (raw && !localStorage.getItem('vibe_pre_cloud_backup_v1')) localStorage.setItem('vibe_pre_cloud_backup_v1', raw);
         if (raw) {
           const parsed = JSON.parse(raw);
           userState.wrongMap = parsed.wrongMap || {};
@@ -3749,7 +3754,8 @@
           quizHistory: userState.quizHistory,
           earnedBadgeList: Array.from(userState.earnedBadges)
         };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        localStorage.setItem(window.VibeCloud?.storageKey() || STORAGE_KEY, JSON.stringify(payload));
+        window.VibeCloud?.saved(payload);
       } catch (e) {
         console.error(e);
       }
@@ -4619,13 +4625,15 @@
 
       // 이력 저장
       userState.quizHistory.unshift({
+        id: crypto.randomUUID(),
+        at: new Date().toISOString(),
         date: new Date().toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
         subject: SUBJECTS[quizSubject]?.name || "전체",
         score: score,
         total: total,
         correct: quizCorrectCount
       });
-      if (userState.quizHistory.length > 10) userState.quizHistory.pop();
+      // Keep the full history; only the recent-history display is limited.
       saveUserData();
 
       // 재도전 버튼
@@ -5009,15 +5017,15 @@
         if (userState.quizHistory.length === 0) {
           historyContainer.innerHTML = `<p class="text-slate-400 py-3 text-center">아직 응시한 퀴즈 기록이 없습니다.</p>`;
         } else {
-          historyContainer.innerHTML = userState.quizHistory.map(h => `
+          historyContainer.innerHTML = userState.quizHistory.slice(0, 10).map(h => `
             <div class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
-                <span class="font-bold text-slate-800 dark:text-slate-200">${h.subject}</span>
-                <span class="text-[11px] text-slate-400 ml-1.5">${h.date}</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200">${escapeHtml(h.subject)}</span>
+                <span class="text-[11px] text-slate-400 ml-1.5">${escapeHtml(h.date)}</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="font-black text-sm text-brand-600">${h.score}점</span>
-                <span class="text-[11px] text-slate-400">(${h.correct}/${h.total})</span>
+                <span class="font-black text-sm text-brand-600">${escapeHtml(h.score)}점</span>
+                <span class="text-[11px] text-slate-400">(${escapeHtml(h.correct)}/${escapeHtml(h.total)})</span>
               </div>
             </div>
           `).join('');
@@ -5051,9 +5059,28 @@
       loadUserData();
       renderAllViews();
       renderFlashSetup();
+      window.VibeCloud.init({apply(data) {
+        const p = window.VibeProgress.snapshot(data);
+        userState = {wrongMap:p.wrongMap,clippedSet:new Set(p.clippedList),streakDays:p.streakDays,lastStudyDate:p.lastStudyDate,quizHistory:p.quizHistory,earnedBadges:new Set(p.earnedBadgeList)};
+        checkStreak();
+        saveUserData();
+        renderAllViews();
+      }});
     });
 
   </script>
+  <dialog id="vibe-account-dialog" aria-labelledby="vibe-account-title">
+    <h2 id="vibe-account-title">학습 계정</h2>
+    <p id="vibe-account-name">기기에서 학습 중</p>
+    <p id="vibe-cloud-status" role="status" aria-live="polite">로그인 상태 확인 중</p>
+    <p>Google 로그인 후 오답·클립·퀴즈 이력·배지를 계정별로 저장합니다. 로그인하지 않아도 이 기기에서 학습할 수 있습니다.</p>
+    <button id="vibe-google-login" type="button">Google로 계속하기</button>
+    <button id="vibe-cloud-sync" type="button" hidden>지금 동기화</button>
+    <button id="vibe-import-guest" type="button" hidden>이 기기의 기존 기록 가져오기</button>
+    <button id="vibe-logout" type="button" hidden>로그아웃</button>
+    <button id="vibe-auth-close" type="button">닫기</button>
+  </dialog>
+  <script src="js/cloud-progress.js"></script>
   <!-- 서비스 워커 등록: 오프라인 실행 지원 -->
   <script>
     if ('serviceWorker' in navigator) {

@@ -1,8 +1,9 @@
 // 생성형AI용어집 서비스 워커: 한 번 접속하면 이후에는 인터넷 없이도 실행되도록 파일을 저장해 둡니다.
-const CACHE = 'vibelearn-v9'; // 파일 구성이 바뀌면 숫자를 올려 주세요
+const CACHE = 'vibelearn-v10'; // 사용자별 기록 저장 지원
 const CORE = [
   './', './index.html', './manifest.json',
-  './css/app.css', './js/lucide.min.js', './fonts/PretendardVariable.woff2',
+  './css/app.css', './css/cloud.css', './js/lucide.min.js', './js/progress-core.js',
+  './js/cloud-progress.js', './js/supabase-2.118.0.js', './fonts/PretendardVariable.woff2',
   './icons/icon-192.png', './icons/icon-512.png'
 ];
 
@@ -17,7 +18,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)));
+    await Promise.all(keys.filter((k) => k.startsWith('vibelearn-') && k !== CACHE).map((k) => caches.delete(k)));
     await self.clients.claim();
   })());
 });
@@ -25,6 +26,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
+  // Never cache authenticated API responses or interfere with another study app.
+  const url = new URL(req.url);
+  const scope = new URL(self.registration.scope);
+  if (url.origin !== scope.origin || !url.pathname.startsWith(scope.pathname) || req.headers.has('authorization')) return;
 
   // 페이지(HTML): 인터넷이 되면 최신 버전, 안 되면 저장본
   if (req.mode === 'navigate') {
@@ -32,7 +37,7 @@ self.addEventListener('fetch', (event) => {
       try {
         const res = await fetch(req);
         const cache = await caches.open(CACHE);
-        cache.put('./index.html', res.clone());
+        if (res.ok) cache.put('./index.html', res.clone());
         return res;
       } catch (e) {
         return (await caches.match('./index.html')) || (await caches.match('./'));
