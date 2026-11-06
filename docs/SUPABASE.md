@@ -46,11 +46,11 @@ SHA256: ee3be8de192b97cb1d73d1e95d6b82bb1f6b658c0f97c4ef757fc331996ed3d3.
 - 기존 app_progress 4행 fingerprint b2ca1b05b95bf24664a4bda76362a3ed가 검사 전후 동일. Vibe 실제 사용자 기록은 아직 0건.
 - 인앱 브라우저 localhost:4190: 로그인 안내, 클립 저장, 오답, 퀴즈 완료, 배지, 새로고침 후 통계 유지 확인. 실제 Google OAuth 왕복은 아직 미검증.
 
-## 배포 전 남은 단계
+## 배포 결과 및 남은 확인
 
-1. 사용자 확인 후 Supabase Auth Redirect URLs에 https://alsrl0924.github.io/vibe/ 추가. 기존 Site URL과 다른 앱 허용 주소는 유지.
-2. 사용자 배포 지시 후 GitHub 원격 main 최신 변경 확인, 푸시 및 Pages 성공 확인.
-3. 배포 사이트에서 사용자가 Google 로그인하고, 실제 계정의 기록 저장/새로고침/다른 기기 동기화를 확인.
+1. 완료: 승인 후 Supabase Auth Redirect URLs에 https://alsrl0924.github.io/vibe/ 추가. 기존 Site URL과 다른 앱 허용 주소는 유지.
+2. 완료: 사용자 배포 지시 후 main에 d912ce656dd3e2a7ef7782b816391ff36122a951 반영. Pages 실행 42210976726 성공, 실제 사이트 로그인 화면 및 Google 연결 확인.
+3. 남음: 브라우저의 Google 계정이 로그아웃 상태여서 실제 로그인 왕복은 미검증. 배포 사이트에서 사용자가 Google 로그인한 뒤 계정 기록 저장/새로고침/다른 기기 동기화를 확인.
 
 ## 기존 프로젝트 진단 결과
 
