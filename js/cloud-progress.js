@@ -1,5 +1,6 @@
 (function () {
   'use strict';
+  const shared=window.StudySharedAuth;
   const core=window.VibeProgress, APP='vibe-glossary', PROJECT='lkokgqqhsppezflqkbgx';
   const GUEST='vibe_progress_state', LEGACY='vibe_guest_state';
   let client, bridge, user=null, doc=core.empty(), previous=core.snapshot(), ready=false, running=false, pending=false, timer, generation=0;
@@ -70,7 +71,7 @@
   }
   function activate(next) {
     if(ready && user?.id===next?.id)return;
-    if(ready && user?.id!==next?.id){location.reload();return;}
+    if(ready && user?.id!==next?.id){generation++;ready=false;pending=false;clearTimeout(timer);document.body.inert=true;location.reload();return;}
     user=next;generation++;
     if(user) {
       const cached=readJSON(docKey());
@@ -110,8 +111,9 @@
     document.getElementById('vibe-logout').onclick=()=>void logout();
     document.getElementById('vibe-import-guest').onclick=importGuest;
     try {
+      shared.prepare(localStorage);
       client=window.supabase.createClient(`https://${PROJECT}.supabase.co`,'sb_publishable_kdFzHxEd7IoUvNlgdsIx9Q_31k-HxHF',{
-        auth:{storageKey:`vibe-${PROJECT}-auth-v1`,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+        auth:{storageKey:shared.authKey(),persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
       client.auth.onAuthStateChange((_event,session)=>setTimeout(()=>{
         try {activate(session?.user || null);}catch {ready=false;status('기기 기록을 읽지 못해 계정 저장을 멈췄습니다. 원본 기록은 유지됩니다.');}
       },0));

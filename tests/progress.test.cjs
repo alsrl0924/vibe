@@ -31,9 +31,9 @@ test('unknown versions and conflicting event IDs fail closed without mutating ei
 test('service worker ignores Supabase, authorization headers and other apps; activation preserves foreign caches',async()=>{
  const handlers={},deleted=[],responded=[];
  const scope={self:{registration:{scope:'https://example.test/vibe/'},addEventListener:(t,f)=>handlers[t]=f,clients:{claim(){}},skipWaiting(){}},URL,Response,
- caches:{keys:async()=>['vibelearn-v9','vibelearn-v10','linux-master-study-v2','netstudy-v3'],delete:async k=>deleted.push(k)},fetch:async()=>{throw Error('should not fetch');}};
+ caches:{keys:async()=>['vibelearn-v9','vibelearn-v10','vibelearn-v11','linux-master-study-v2','netstudy-v3'],delete:async k=>deleted.push(k)},fetch:async()=>{throw Error('should not fetch');}};
  vm.runInNewContext(fs.readFileSync(require.resolve('../sw.js'),'utf8'),scope);
- let wait;handlers.activate({waitUntil:p=>wait=p});await wait;assert.deepEqual(deleted,['vibelearn-v9']);
+ let wait;handlers.activate({waitUntil:p=>wait=p});await wait;assert.deepEqual(deleted,['vibelearn-v9','vibelearn-v10']);
  for(const [url,headers]of [['https://project.supabase.co/rest/v1/app_progress',{}],['https://example.test/netstudy/',{}],['https://example.test/vibe/data',{authorization:'bearer test'}]]) {
   handlers.fetch({request:{method:'GET',url,headers:new Headers(headers)},respondWith:x=>responded.push(x)});
  } assert.equal(responded.length,0);

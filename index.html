@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="css/app.css" />
   <link rel="stylesheet" href="css/cloud.css" />
   <script src="js/progress-core.js"></script>
+  <script src="js/shared-auth-core.js"></script>
   <script src="js/supabase-2.118.0.js"></script>
 
   <!-- Lucide Icons -->
@@ -61,7 +62,7 @@
       <div class="flex items-center justify-between h-16 sm:h-20">
         
         <!-- 로고 및 앱 타이틀 -->
-        <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('glossary')">
+        <div class="vibe-brand flex items-center space-x-3 cursor-pointer" onclick="switchTab('glossary')">
           <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/25">
             <i data-lucide="sparkles" class="w-5 h-5 sm:w-6 sm:h-6"></i>
           </div>
@@ -79,7 +80,7 @@
         </div>
 
         <!-- PC 전용 탭 네비게이션 -->
-        <nav class="hidden md:flex items-center gap-1.5">
+        <nav class="vibe-desktop-nav hidden md:flex items-center gap-1.5">
           <button id="pc-nav-glossary" onclick="switchTab('glossary')" class="px-3 py-2 rounded-xl text-sm font-semibold flex items-center gap-1.5 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
             <i data-lucide="book-open" class="w-4 h-4"></i>
             <span>용어사전</span>
@@ -105,7 +106,15 @@
         </nav>
 
         <!-- 우측 액션: 로그인 및 다크모드 -->
-        <div class="flex items-center gap-2">
+        <div class="vibe-header-actions flex items-center gap-2">
+          <details id="vibe-app-switcher" class="vibe-app-switcher">
+            <summary aria-label="다른 학습앱"><i data-lucide="layout-grid" aria-hidden="true"></i><span class="vibe-switch-label">다른 학습앱</span><i data-lucide="chevron-down" class="vibe-switch-chevron" aria-hidden="true"></i></summary>
+            <nav aria-label="학습앱 이동">
+              <a href="/netstudy/">네트워크관리사</a>
+              <a href="/linuxstudy/">리눅스마스터</a>
+              <a href="/vibe/" aria-current="page">생성형 AI 용어집 <span aria-hidden="true">✓</span></a>
+            </nav>
+          </details>
           <button id="vibe-auth-open" type="button" class="vibe-account-button">로그인</button>
           <!-- 다크모드 토글 -->
           <button onclick="toggleDarkMode()" aria-label="테마 변경" class="p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
@@ -658,7 +667,7 @@
   <!-- ========================================== -->
   <!-- 3. 모바일 전용 하단 고정 네비게이션 탭바 (PWA) -->
   <!-- ========================================== -->
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 pb-[env(safe-area-inset-bottom)]">
+  <nav class="vibe-mobile-nav md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 pb-[env(safe-area-inset-bottom)]">
     <div class="grid grid-cols-5 h-16">
       
       <button onclick="switchTab('glossary')" id="mob-nav-glossary" class="flex flex-col items-center justify-center gap-1 text-brand-600 dark:text-brand-400">
@@ -5073,7 +5082,7 @@
     <h2 id="vibe-account-title">학습 계정</h2>
     <p id="vibe-account-name">기기에서 학습 중</p>
     <p id="vibe-cloud-status" role="status" aria-live="polite">로그인 상태 확인 중</p>
-    <p>Google 로그인 후 오답·클립·퀴즈 이력·배지를 계정별로 저장합니다. 로그인하지 않아도 이 기기에서 학습할 수 있습니다.</p>
+    <p>한 번 로그인하면 다른 학습앱에서도 같은 계정을 사용합니다. 오답·클립·퀴즈 이력·배지는 앱별로 저장됩니다. 로그인하지 않아도 이 기기에서 학습할 수 있습니다.</p>
     <button id="vibe-google-login" type="button">Google로 계속하기</button>
     <button id="vibe-cloud-sync" type="button" hidden>지금 동기화</button>
     <button id="vibe-import-guest" type="button" hidden>이 기기의 기존 기록 가져오기</button>
@@ -5081,6 +5090,10 @@
     <button id="vibe-auth-close" type="button">닫기</button>
   </dialog>
   <script src="js/cloud-progress.js"></script>
+  <script>
+    document.addEventListener("click", event => { const picker=document.getElementById("vibe-app-switcher"); if(!picker.contains(event.target))picker.open=false; });
+    document.addEventListener("keydown", event => { if(event.key==="Escape"){const picker=document.getElementById("vibe-app-switcher");if(picker.open){picker.open=false;picker.querySelector("summary").focus();}} });
+  </script>
   <!-- 서비스 워커 등록: 오프라인 실행 지원 -->
   <script>
     if ('serviceWorker' in navigator) {
