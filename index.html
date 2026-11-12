@@ -335,7 +335,7 @@
                 📋 4지선다
               </button>
               <button type="button" onclick="setQuizType('short')" class="quiz-type-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
-                ✍️ 단답식 (초성)
+                ✍️ 단답식
               </button>
               <button type="button" onclick="setQuizType('ox')" class="quiz-type-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
                 ⭕❌ OX 스피드
@@ -377,20 +377,6 @@
             </label>
           </div>
 
-          <!-- 5. 시험 대비 모드 토글 -->
-          <div class="p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl flex items-center justify-between gap-3 border border-slate-200 dark:border-slate-700">
-            <div>
-              <div class="font-bold flex items-center gap-1.5 text-xs sm:text-sm">
-                <i data-lucide="graduation-cap" class="w-4 h-4 text-brand-600 dark:text-brand-400"></i>
-                <span>시험 대비 모드</span>
-              </div>
-              <p class="text-[11px] text-slate-400">실제 시험처럼 객관식·단답식만 출제하고 초성 힌트를 숨깁니다.</p>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-              <input type="checkbox" id="exam-toggle" class="sr-only peer" />
-              <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
-            </label>
-          </div>
 
         </div>
 
@@ -462,10 +448,6 @@
 
           <!-- 2. 단답식 영역 -->
           <div id="quiz-short-box" class="hidden space-y-3">
-            <div id="quiz-short-hint-box" class="p-3 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200 dark:border-amber-900/60 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
-              <i data-lucide="lightbulb" class="w-4 h-4 text-amber-500 flex-shrink-0"></i>
-              <span>초성 힌트: <strong id="quiz-short-hint" class="font-mono text-sm tracking-wider text-amber-950 dark:text-amber-200">ㅍㄹㅍㅌ</strong></span>
-            </div>
             <div class="flex gap-2">
               <input type="text" id="quiz-short-input" placeholder="정답을 입력하세요 (한글/영문)" onkeydown="if(event.key==='Enter' && !event.isComposing) submitShortAnswer()" class="flex-1 px-3.5 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none" />
               <button onclick="submitShortAnswer()" class="px-5 py-3 bg-brand-600 text-white rounded-xl text-xs font-bold">제출</button>
@@ -734,7 +716,7 @@
 
     /**
      * 100개 전체 기술용어 데이터셋
-     * 객관식, 단답식, OX 퀴즈, 초성 힌트 완비
+     * 객관식, 단답식, OX 퀴즈
      */
     const GLOSSARY_DATA = [
   {
@@ -4194,7 +4176,6 @@
     let activeQuizMode = 'count_10'; // 현재 진행 중인 퀴즈에 실제 적용된 출제 방식
     let answerLocked = false;        // 한 문제에 답이 두 번 채점되지 않도록 잠금
     let currentResolvedType = 'choice'; // 현재 문제 유형 (choice / short / ox)
-    let isExamMode = false;          // 시험 대비 모드 (OX 제외 · 초성 힌트 숨김)
 
     // 객관식 보기 표시용 텍스트
     // 4개 보기 모두에 괄호 설명이 있을 때만 그대로 보여 주고,
@@ -4252,11 +4233,6 @@
 
     function startCustomQuiz(customPool = null, overrideMode = null) {
       isTimeAttack = document.getElementById('timelimit-toggle').checked;
-      isExamMode = document.getElementById('exam-toggle').checked;
-      if (isExamMode && quizType === 'ox') {
-        alert("시험 대비 모드에서는 OX 유형을 쓸 수 없습니다. 혼합·4지선다·단답식 중에서 골라주세요.");
-        return;
-      }
       const effectiveMode = overrideMode || quizMode;
       activeQuizMode = effectiveMode;
 
@@ -4359,15 +4335,10 @@
       // 유형 결정 (객관식 / 단답식 / OX)
       let resolvedType = quizType;
       if (quizType === 'mixed') {
-        if (isExamMode) {
-          // 시험 대비 모드: 객관식과 단답식만 번갈아 출제
-          resolvedType = (currentQuizIdx % 2 === 0) ? 'choice' : 'short';
-        } else {
-          const mod = currentQuizIdx % 3;
-          if (mod === 0) resolvedType = 'choice';
-          else if (mod === 1) resolvedType = 'short';
-          else resolvedType = 'ox';
-        }
+        const mod = currentQuizIdx % 3;
+        if (mod === 0) resolvedType = 'choice';
+        else if (mod === 1) resolvedType = 'short';
+        else resolvedType = 'ox';
       }
 
       // 화면 요소 세팅
@@ -4390,10 +4361,8 @@
         questionText.innerText = term.quiz.ox_question;
         oxBox.classList.remove('hidden');
       } else if (resolvedType === 'short') {
-        typeBadge.innerText = isExamMode ? "✍️ 단답식" : "✍️ 단답식 (초성 힌트)";
+        typeBadge.innerText = "✍️ 단답식";
         questionText.innerText = term.quiz.question;
-        document.getElementById('quiz-short-hint').innerText = term.quiz.hint;
-        document.getElementById('quiz-short-hint-box').classList.toggle('hidden', isExamMode);
         const input = document.getElementById('quiz-short-input');
         input.value = '';
         input.disabled = false;
