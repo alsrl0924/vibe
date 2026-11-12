@@ -354,7 +354,7 @@
                 20문제 모의고사
               </button>
               <button type="button" onclick="setQuizMode('infinite')" class="quiz-mode-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
-                ♾️ 무한 트레이닝
+                🔁 전체 한 바퀴
               </button>
               <button type="button" onclick="setQuizMode('weak')" class="quiz-mode-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
                 🚨 취약 핀셋 (2회↑)
@@ -563,7 +563,7 @@
             <i data-lucide="book-x" class="w-6 h-6 text-rose-500"></i>
             <span>상시 오답노트 보관함</span>
           </h2>
-          <p class="text-xs text-slate-500">틀렸던 문제들이 자동으로 저장됩니다. 다시 풀어서 맞히면 졸업 처리됩니다!</p>
+          <p class="text-xs text-slate-500">한 번이라도 틀린 문제는 다시 맞혀도 지워지지 않고 계속 남습니다. 완전히 외운 문제는 '목록에서 빼기'로 직접 정리하세요.</p>
         </div>
         <button id="solve-all-wrongs-btn" onclick="startSolveWrongsOnly()" class="self-start sm:self-auto flex-shrink-0 whitespace-nowrap px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
           <i data-lucide="play" class="w-3.5 h-3.5"></i>
@@ -726,9 +726,9 @@
     const BADGES_CONFIG = [
       { id: "badge_first", title: "새싹 학습자", desc: "첫 퀴즈 1회 완료하기", icon: "sprout" },
       { id: "badge_perfect", title: "바이브 마스터", desc: "퀴즈에서 100점 만점 획득", icon: "award" },
-      { id: "badge_wrong_hunter", title: "오답 사냥꾼", desc: "오답노트 문제 5개 극복", icon: "target" },
+      { id: "badge_wrong_hunter", title: "오답 사냥꾼", desc: "틀렸던 문제 5개 다시 맞히기", icon: "target" },
       { id: "badge_streak_3", title: "작심삼일 탈출", desc: "3일 연속 학습 달성", icon: "flame" },
-      { id: "badge_infinite_10", title: "무한 도전자", desc: "무한 모드 10문제 돌파", icon: "infinity" },
+      { id: "badge_infinite_10", title: "연속 정답왕", desc: "10문제 연속 정답", icon: "trophy" },
       { id: "badge_speed", title: "스피드 러너", desc: "타임어택 모드로 퀴즈 완료", icon: "zap" }
     ];
 
@@ -3716,11 +3716,40 @@
     let userState = {
       wrongMap: {},      // { termId: wrongCount }
       clippedSet: new Set(), // Set of termId
+      lastResultMap: {},     // { termId: 'correct' | 'wrong' } 오답노트 용어의 최근 풀이 결과
+      recoveredSet: new Set(), // 틀렸다가 다시 맞힌 적 있는 용어
       streakDays: 1,
       lastStudyDate: "",
       quizHistory: [],   // [ { date, subject, score, total, correct, wrongs } ]
       earnedBadges: new Set()
     };
+
+    // '최근 맞힘' 표시와 '다시 맞힌 문제' 기록은 이 기기에만 저장합니다.
+    // (계정 동기화 형식을 바꾸지 않기 위해 학습 기록과 다른 키를 사용)
+    function localExtrasKey() {
+      return (window.VibeCloud?.storageKey() || STORAGE_KEY) + '_device_extras';
+    }
+    function loadLocalExtras() {
+      try {
+        const raw = localStorage.getItem(localExtrasKey());
+        const parsed = raw ? JSON.parse(raw) : {};
+        userState.lastResultMap = (parsed && typeof parsed.lastResultMap === 'object' && parsed.lastResultMap) || {};
+        userState.recoveredSet = new Set(Array.isArray(parsed?.recoveredList) ? parsed.recoveredList : []);
+      } catch (e) {
+        userState.lastResultMap = {};
+        userState.recoveredSet = new Set();
+      }
+    }
+    function saveLocalExtras() {
+      try {
+        localStorage.setItem(localExtrasKey(), JSON.stringify({
+          lastResultMap: userState.lastResultMap || {},
+          recoveredList: Array.from(userState.recoveredSet || [])
+        }));
+      } catch (e) {
+        console.error(e);
+      }
+    }
 
     function loadUserData() {
       try {
@@ -3749,6 +3778,7 @@
       } catch (e) {
         console.error(e);
       }
+      loadLocalExtras();
       checkStreak();
       saveUserData(); // 연속 학습일 갱신 결과를 바로 저장 (앱만 열어도 기록 유지)
     }
@@ -3765,6 +3795,7 @@
         };
         localStorage.setItem(window.VibeCloud?.storageKey() || STORAGE_KEY, JSON.stringify(payload));
         window.VibeCloud?.saved(payload);
+        saveLocalExtras();
       } catch (e) {
         console.error(e);
       }
@@ -4261,7 +4292,7 @@
       pool.sort(() => Math.random() - 0.5);
 
       if (effectiveMode === 'infinite') {
-        activeQuizList = pool; // 무한 모드는 끝까지 순환
+        activeQuizList = pool; // 전체 한 바퀴: 선택한 과목의 모든 문제를 한 번씩 (반복 없음)
       } else if (effectiveMode === 'count_20') {
         activeQuizList = pool.slice(0, Math.min(20, pool.length));
       } else if (effectiveMode === 'count_10') {
@@ -4291,19 +4322,13 @@
     }
 
     function loadQuizItem(idx) {
+      // 모든 출제 방식에서 문제는 한 번씩만 나오고, 끝나면 결과 화면으로 이동
       if (idx >= activeQuizList.length) {
-        if (activeQuizMode === 'infinite') {
-          // 무한 모드일 경우 다시 셔플하여 계속 출제
-          activeQuizList.sort(() => Math.random() - 0.5);
-          currentQuizIdx = 0;
-        } else {
-          finishQuiz();
-          return;
-        }
+        finishQuiz();
+        return;
       }
 
       const term = activeQuizList[currentQuizIdx];
-      const isInfinite = (activeQuizMode === 'infinite');
       answerLocked = false;
 
       // 상단 번호 및 진행바
@@ -4311,15 +4336,10 @@
       const totalNumEl = document.getElementById('quiz-total-num');
       const slashEl = document.getElementById('quiz-total-slash');
 
-      if (isInfinite) {
-        slashEl.classList.add('hidden');
-        document.getElementById('quiz-progress-bar').style.width = '100%';
-      } else {
-        slashEl.classList.remove('hidden');
-        totalNumEl.innerText = activeQuizList.length;
-        const pct = ((currentQuizIdx + 1) / activeQuizList.length) * 100;
-        document.getElementById('quiz-progress-bar').style.width = `${pct}%`;
-      }
+      slashEl.classList.remove('hidden');
+      totalNumEl.innerText = activeQuizList.length;
+      const pct = ((currentQuizIdx + 1) / activeQuizList.length) * 100;
+      document.getElementById('quiz-progress-bar').style.width = `${pct}%`;
 
       // 과목 & 누적 오답 뱃지
       const sub = SUBJECTS[term.category] || {};
@@ -4544,13 +4564,12 @@
       if (isCorrect) {
         quizCorrectCount++;
         infiniteStreak++;
-        // 맞혔을 때: 만약 오답노트에 있던 문제였다면 오답 카운트 1 감소 (0이 되면 오답노트에서 졸업!)
+        // 맞혔을 때: 오답노트에 있던 문제라도 지우지 않고 '최근 결과'만 기록
         if (userState.wrongMap[term.id]) {
-          userState.wrongMap[term.id]--;
-          if (userState.wrongMap[term.id] <= 0) {
-            delete userState.wrongMap[term.id];
-            showToast(`🎉 [${term.term_ko}] 문제를 완전히 극복하여 오답노트에서 졸업했습니다!`);
-            unlockBadge('badge_wrong_hunter');
+          userState.lastResultMap[term.id] = 'correct';
+          if (!userState.recoveredSet.has(term.id)) {
+            userState.recoveredSet.add(term.id);
+            if (userState.recoveredSet.size >= 5) unlockBadge('badge_wrong_hunter');
           }
         }
 
@@ -4558,8 +4577,9 @@
         titleEl.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i> <span>정답입니다! 완벽해요! 🎉</span>`;
       } else {
         infiniteStreak = 0;
-        // 틀렸을 때: 문제별 누적 오답 횟수 +1 증가
+        // 틀렸을 때: 문제별 누적 오답 횟수 +1 증가 (오답노트에 계속 남음)
         userState.wrongMap[term.id] = (userState.wrongMap[term.id] || 0) + 1;
+        userState.lastResultMap[term.id] = 'wrong';
         quizWrongItems.push({
           term: term,
           userAnswer: userSub,
@@ -4586,7 +4606,7 @@
       document.getElementById('quiz-next-box').classList.remove('hidden');
       lucide.createIcons();
 
-      // 무한 모드 10연속 달성 시 배지
+      // 10문제 연속 정답 시 배지
       if (infiniteStreak >= 10) unlockBadge('badge_infinite_10');
     }
 
@@ -4746,17 +4766,23 @@
 
       container.innerHTML = wrongTerms.map(t => `
         <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <span class="font-black text-sm text-slate-900 dark:text-slate-100">${escapeHtml(t.term_ko)}</span>
               <span class="text-xs font-mono text-slate-400">(${escapeHtml(t.term_en)})</span>
               <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300">
                 ❌ 누적 ${userState.wrongMap[t.id]}회 오답
               </span>
+              ${userState.lastResultMap[t.id] === 'correct' ? `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">✅ 최근 맞힘</span>` : ''}
             </div>
-            <button onclick="quickTestTerm(${t.id})" class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline">
-              다시 풀기
-            </button>
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+              <button onclick="quickTestTerm(${t.id})" class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline">
+                다시 풀기
+              </button>
+              <button onclick="removeFromWrongNote(${t.id})" class="px-2 py-1 rounded-lg text-[11px] text-slate-400 hover:text-rose-500 hover:underline">
+                목록에서 빼기
+              </button>
+            </div>
           </div>
           <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">${escapeHtml(t.summary)}</p>
           <div class="text-xs text-slate-400 bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
@@ -4765,6 +4791,19 @@
         </div>
       `).join('');
       lucide.createIcons();
+    }
+
+    // 오답노트에서 직접 빼기 (사용자가 원할 때만 삭제)
+    function removeFromWrongNote(termId) {
+      const term = GLOSSARY_DATA.find(t => t.id === termId);
+      if (!term) return;
+      if (!confirm(`[${term.term_ko}]을(를) 오답노트에서 뺄까요?\n누적 오답 횟수 기록도 함께 지워집니다.`)) return;
+      delete userState.wrongMap[termId];
+      delete userState.lastResultMap[termId];
+      saveUserData();
+      renderWrongView();
+      renderCards();
+      showToast(`[${term.term_ko}]을(를) 오답노트에서 뺐습니다.`);
     }
 
     function startSolveWrongsOnly() {
@@ -5070,7 +5109,8 @@
       renderFlashSetup();
       window.VibeCloud.init({apply(data) {
         const p = window.VibeProgress.snapshot(data);
-        userState = {wrongMap:p.wrongMap,clippedSet:new Set(p.clippedList),streakDays:p.streakDays,lastStudyDate:p.lastStudyDate,quizHistory:p.quizHistory,earnedBadges:new Set(p.earnedBadgeList)};
+        userState = {wrongMap:p.wrongMap,clippedSet:new Set(p.clippedList),lastResultMap:{},recoveredSet:new Set(),streakDays:p.streakDays,lastStudyDate:p.lastStudyDate,quizHistory:p.quizHistory,earnedBadges:new Set(p.earnedBadgeList)};
+        loadLocalExtras();
         checkStreak();
         saveUserData();
         renderAllViews();
