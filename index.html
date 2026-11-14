@@ -329,16 +329,16 @@
           <div class="space-y-1.5">
             <label class="font-bold text-slate-700 dark:text-slate-300">2. 문제 유형</label>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <button type="button" onclick="setQuizType('mixed')" class="quiz-type-btn active p-2.5 rounded-xl border-2 border-brand-600 bg-brand-50 dark:bg-brand-950 font-bold text-brand-700 dark:text-brand-300 text-center">
+              <button type="button" data-type="mixed" onclick="setQuizType('mixed')" class="quiz-type-btn active p-2.5 rounded-xl border-2 border-brand-600 bg-brand-50 dark:bg-brand-950 font-bold text-brand-700 dark:text-brand-300 text-center">
                 ⚡ 혼합 모드
               </button>
-              <button type="button" onclick="setQuizType('choice')" class="quiz-type-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
+              <button type="button" data-type="choice" onclick="setQuizType('choice')" class="quiz-type-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
                 📋 4지선다
               </button>
-              <button type="button" onclick="setQuizType('short')" class="quiz-type-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
+              <button type="button" data-type="short" onclick="setQuizType('short')" class="quiz-type-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
                 ✍️ 단답식
               </button>
-              <button type="button" onclick="setQuizType('ox')" class="quiz-type-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
+              <button type="button" data-type="ox" onclick="setQuizType('ox')" class="quiz-type-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
                 ⭕❌ OX 스피드
               </button>
             </div>
@@ -351,8 +351,8 @@
               <button type="button" onclick="setQuizMode('count_10')" class="quiz-mode-btn active p-2.5 rounded-xl border-2 border-brand-600 bg-brand-50 dark:bg-brand-950 font-bold text-brand-700 dark:text-brand-300 text-center">
                 10문제 시험
               </button>
-              <button type="button" onclick="setQuizMode('count_20')" class="quiz-mode-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
-                20문제 모의고사
+              <button type="button" onclick="setQuizMode('wrong_only')" class="quiz-mode-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
+                ❌ 오답 풀기
               </button>
               <button type="button" onclick="setQuizMode('infinite')" class="quiz-mode-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
                 🔁 전체 한 바퀴
@@ -548,10 +548,21 @@
           </h2>
           <p class="text-xs text-slate-500">한 번이라도 틀린 문제는 다시 맞혀도 지워지지 않고 계속 남습니다. 완전히 외운 문제는 '목록에서 빼기'로 직접 정리하세요.</p>
         </div>
-        <button id="solve-all-wrongs-btn" onclick="startSolveWrongsOnly()" class="self-start sm:self-auto flex-shrink-0 whitespace-nowrap px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+        <button id="solve-all-wrongs-btn" onclick="toggleWrongTypePicker()" class="self-start sm:self-auto flex-shrink-0 whitespace-nowrap px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
           <i data-lucide="play" class="w-3.5 h-3.5"></i>
           <span>오답만 모아 풀기</span>
         </button>
+      </div>
+
+      <!-- 오답만 모아 풀기: 문제 형식 선택 -->
+      <div id="wrong-type-picker" class="hidden p-3 bg-white dark:bg-slate-900 rounded-2xl border border-rose-200 dark:border-rose-900/60 space-y-2">
+        <p class="text-xs font-bold text-slate-700 dark:text-slate-300">어떤 형식으로 풀까요?</p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs sm:text-sm">
+          <button type="button" onclick="startSolveWrongsOnly('mixed')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center hover:border-rose-400">⚡ 혼합 모드</button>
+          <button type="button" onclick="startSolveWrongsOnly('choice')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center hover:border-rose-400">📋 4지선다</button>
+          <button type="button" onclick="startSolveWrongsOnly('short')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center hover:border-rose-400">✍️ 단답식</button>
+          <button type="button" onclick="startSolveWrongsOnly('ox')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center hover:border-rose-400">⭕❌ OX 스피드</button>
+        </div>
       </div>
 
       <div id="wrong-list-container" class="space-y-3"></div>
@@ -4173,10 +4184,16 @@
      */
     let quizSubject = 'all';
     let quizType = 'mixed'; // mixed, choice, short, ox
-    let quizMode = 'count_10'; // count_10, count_20, infinite, weak, wrong_only, clipped_only
+    let quizMode = 'count_10'; // count_10, infinite, weak, wrong_only, clipped_only
     let activeQuizMode = 'count_10'; // 현재 진행 중인 퀴즈에 실제 적용된 출제 방식
     let answerLocked = false;        // 한 문제에 답이 두 번 채점되지 않도록 잠금
     let currentResolvedType = 'choice'; // 현재 문제 유형 (choice / short / ox)
+    let currentOx = null;            // 현재 OX 문제 { answer, decoy } (decoy: 대신 보여 준 다른 용어)
+
+    // 문제 문장은 용어 목록(사전)의 설명(summary)을 그대로 사용해 사전과 항상 일치시킴
+    function buildTermQuestion(term) {
+      return `다음 설명에 해당하는 용어는?\n\n${term.summary}`;
+    }
 
     // 객관식 보기 표시용 텍스트
     // 4개 보기 모두에 괄호 설명이 있을 때만 그대로 보여 주고,
@@ -4219,9 +4236,10 @@
     function setQuizType(type) {
       quizType = type;
       document.querySelectorAll('.quiz-type-btn').forEach(btn => {
-        btn.className = "quiz-type-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center";
+        btn.className = btn.dataset.type === type
+          ? "quiz-type-btn active p-2.5 rounded-xl border-2 border-brand-600 bg-brand-50 dark:bg-brand-950 font-bold text-brand-700 dark:text-brand-300 text-center"
+          : "quiz-type-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center";
       });
-      event.currentTarget.className = "quiz-type-btn active p-2.5 rounded-xl border-2 border-brand-600 bg-brand-50 dark:bg-brand-950 font-bold text-brand-700 dark:text-brand-300 text-center";
     }
 
     function setQuizMode(mode) {
@@ -4248,9 +4266,11 @@
           return;
         }
       } else if (effectiveMode === 'wrong_only') {
-        pool = GLOSSARY_DATA.filter(t => (userState.wrongMap[t.id] || 0) > 0);
+        // 퀴즈 설정에서 고르면 선택한 과목 안의 오답만, 오답노트에서 시작하면 전체 오답
+        const subjectOnly = !overrideMode && quizSubject !== 'all';
+        pool = GLOSSARY_DATA.filter(t => (userState.wrongMap[t.id] || 0) > 0 && (!subjectOnly || t.category === quizSubject));
         if (pool.length === 0) {
-          alert("오답노트에 저장된 문제가 없습니다!");
+          alert(subjectOnly ? "선택한 과목에는 오답노트에 저장된 문제가 없습니다! 과목을 '전체'로 바꿔 보세요." : "오답노트에 저장된 문제가 없습니다!");
           return;
         }
       } else if (effectiveMode === 'clipped_only') {
@@ -4270,8 +4290,6 @@
 
       if (effectiveMode === 'infinite') {
         activeQuizList = pool; // 전체 한 바퀴: 선택한 과목의 모든 문제를 한 번씩 (반복 없음)
-      } else if (effectiveMode === 'count_20') {
-        activeQuizList = pool.slice(0, Math.min(20, pool.length));
       } else if (effectiveMode === 'count_10') {
         activeQuizList = pool.slice(0, Math.min(10, pool.length));
       } else {
@@ -4359,11 +4377,15 @@
 
       if (resolvedType === 'ox') {
         typeBadge.innerText = "⭕❌ OX 스피드 퀴즈";
-        questionText.innerText = term.quiz.ox_question;
+        // 절반은 이 용어의 설명, 절반은 같은 과목 다른 용어의 설명을 보여 주고 맞는지 판단
+        const others = GLOSSARY_DATA.filter(t => t.category === term.category && t.id !== term.id);
+        const decoy = (Math.random() < 0.5 && others.length) ? others[Math.floor(Math.random() * others.length)] : null;
+        currentOx = { answer: !decoy, decoy };
+        questionText.innerText = `[${term.term_ko} (${term.term_en})]의 설명으로 맞으면 O, 틀리면 X\n\n${(decoy || term).summary}`;
         oxBox.classList.remove('hidden');
       } else if (resolvedType === 'short') {
         typeBadge.innerText = "✍️ 단답식";
-        questionText.innerText = term.quiz.question;
+        questionText.innerText = buildTermQuestion(term);
         const input = document.getElementById('quiz-short-input');
         input.value = '';
         input.disabled = false;
@@ -4371,7 +4393,7 @@
         setTimeout(() => input.focus(), 100);
       } else {
         typeBadge.innerText = "📋 4지선다 객관식";
-        questionText.innerText = term.quiz.question;
+        questionText.innerText = buildTermQuestion(term);
         choiceBox.classList.remove('hidden');
         // 보기 순서를 매번 섞어서 표시 (data-idx에는 원래 보기 번호를 보관)
         const order = shuffleArray(term.quiz.options.map((_, i) => i));
@@ -4429,7 +4451,7 @@
       if (!term) return;
       let correctSub;
       if (currentResolvedType === 'ox') {
-        correctSub = term.quiz.ox_answer ? "O (그렇다)" : "X (아니다)";
+        correctSub = oxCorrectLabel();
       } else if (currentResolvedType === 'short') {
         correctSub = `${term.term_ko} (${term.term_en})`;
         document.getElementById('quiz-short-input').disabled = true;
@@ -4516,8 +4538,14 @@
       if (answerLocked) return;
       clearInterval(timerInterval);
       const term = activeQuizList[currentQuizIdx];
-      const isCorrect = (userChoice === term.quiz.ox_answer);
-      processAnswer(isCorrect, userChoice ? "O (그렇다)" : "X (아니다)", term.quiz.ox_answer ? "O (그렇다)" : "X (아니다)");
+      const isCorrect = (userChoice === currentOx.answer);
+      processAnswer(isCorrect, userChoice ? "O (그렇다)" : "X (아니다)", oxCorrectLabel());
+    }
+
+    // OX 정답 표시 (틀린 설명이었다면 어느 용어의 설명인지 함께 알려 줌)
+    function oxCorrectLabel() {
+      if (currentOx.answer) return "O (그렇다)";
+      return `X (아니다) — 보여 준 설명은 ${currentOx.decoy.term_ko} (${currentOx.decoy.term_en})의 설명`;
     }
 
     // 채점 및 오답노트 저장
@@ -4725,6 +4753,7 @@
         container.innerHTML = '';
         emptyState.classList.remove('hidden');
         solveBtn.classList.add('hidden');
+        document.getElementById('wrong-type-picker').classList.add('hidden');
         return;
       }
 
@@ -4755,9 +4784,6 @@
             </div>
           </div>
           <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">${escapeHtml(t.summary)}</p>
-          <div class="text-xs text-slate-400 bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-            <strong>💡 출제 문제:</strong> ${escapeHtml(t.quiz.question)}
-          </div>
         </div>
       `).join('');
       lucide.createIcons();
@@ -4776,7 +4802,14 @@
       showToast(`[${term.term_ko}]을(를) 오답노트에서 뺐습니다.`);
     }
 
-    function startSolveWrongsOnly() {
+    function toggleWrongTypePicker() {
+      document.getElementById('wrong-type-picker').classList.toggle('hidden');
+    }
+
+    // 오답노트에서 고른 형식으로 전체 오답 풀기 (퀴즈 설정의 문제 유형도 같이 바뀜)
+    function startSolveWrongsOnly(type = quizType) {
+      document.getElementById('wrong-type-picker').classList.add('hidden');
+      setQuizType(type);
       switchTab('quiz');
       startCustomQuiz(null, 'wrong_only');
     }
@@ -4816,9 +4849,6 @@
             </button>
           </div>
           <p class="text-xs text-slate-600 dark:text-slate-300">${escapeHtml(t.summary)}</p>
-          <div class="text-xs text-slate-400 bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-            <strong>문항 미리보기:</strong> ${escapeHtml(t.quiz.question)}
-          </div>
         </div>
       `).join('');
       lucide.createIcons();
