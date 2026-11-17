@@ -361,6 +361,10 @@
                 🚨 취약 핀셋 (2회↑)
               </button>
             </div>
+            <div id="quiz-wrong-min-box" class="hidden flex items-center gap-2 pt-1">
+              <label for="quiz-wrong-min" class="text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">틀린 횟수</label>
+              <select id="quiz-wrong-min" class="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm rounded-xl px-3 py-2"></select>
+            </div>
           </div>
 
           <!-- 4. 실전 옵션: 타임어택 토글 -->
@@ -556,6 +560,10 @@
 
       <!-- 오답만 모아 풀기: 문제 형식 선택 -->
       <div id="wrong-type-picker" class="hidden p-3 bg-white dark:bg-slate-900 rounded-2xl border border-rose-200 dark:border-rose-900/60 space-y-2">
+        <div class="flex items-center gap-2">
+          <label for="wrong-note-min" class="text-xs font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">틀린 횟수</label>
+          <select id="wrong-note-min" class="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm rounded-xl px-3 py-2"></select>
+        </div>
         <p class="text-xs font-bold text-slate-700 dark:text-slate-300">어떤 형식으로 풀까요?</p>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs sm:text-sm">
           <button type="button" onclick="startSolveWrongsOnly('mixed')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center hover:border-rose-400">⚡ 혼합 모드</button>
@@ -3897,6 +3905,7 @@
       if (tabId === 'clipped') renderClippedView();
       if (tabId === 'stats') renderStatsView();
       if (tabId === 'glossary') renderCards();
+      if (tabId === 'quiz' || tabId === 'wrong') refreshWrongMinSelects();
     }
 
     function renderAllViews() {
@@ -3905,6 +3914,7 @@
       renderWrongView();
       renderClippedView();
       renderStatsView();
+      refreshWrongMinSelects();
       lucide.createIcons();
     }
 
@@ -4226,12 +4236,30 @@
     let timerInterval = null;
     let timeLeft = 30;
 
+    // '틀린 횟수' 선택 목록: n회 이상 틀린 문제 수를 함께 표시
+    function fillWrongMinSelect(sel, subject) {
+      if (!sel) return;
+      const counts = GLOSSARY_DATA
+        .filter(t => (userState.wrongMap[t.id] || 0) > 0 && (subject === 'all' || t.category === subject))
+        .map(t => userState.wrongMap[t.id]);
+      const max = Math.max(1, ...counts);
+      const prev = Number(sel.value) || 1;
+      sel.innerHTML = Array.from({ length: max }, (_, i) => i + 1).map(n =>
+        `<option value="${n}">${n}회 이상 틀린 문제 (${counts.filter(c => c >= n).length}개)</option>`).join('');
+      sel.value = String(Math.min(prev, max));
+    }
+    function refreshWrongMinSelects() {
+      fillWrongMinSelect(document.getElementById('quiz-wrong-min'), quizSubject);
+      fillWrongMinSelect(document.getElementById('wrong-note-min'), 'all');
+    }
+
     function setSubject(sub) {
       quizSubject = sub;
       document.querySelectorAll('.quiz-sub-btn').forEach(btn => {
         btn.className = "quiz-sub-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center";
       });
       event.currentTarget.className = "quiz-sub-btn active p-2.5 rounded-xl border-2 border-brand-600 bg-brand-50 dark:bg-brand-950 font-bold text-brand-700 dark:text-brand-300 text-center";
+      refreshWrongMinSelects();
     }
 
     function setQuizType(type) {
@@ -4249,6 +4277,8 @@
         btn.className = "quiz-mode-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center";
       });
       event.currentTarget.className = "quiz-mode-btn active p-2.5 rounded-xl border-2 border-brand-600 bg-brand-50 dark:bg-brand-950 font-bold text-brand-700 dark:text-brand-300 text-center";
+      document.getElementById('quiz-wrong-min-box').classList.toggle('hidden', mode !== 'wrong_only');
+      refreshWrongMinSelects();
     }
 
     function startCustomQuiz(customPool = null, overrideMode = null) {
@@ -4269,9 +4299,13 @@
       } else if (effectiveMode === 'wrong_only') {
         // 퀴즈 설정에서 고르면 선택한 과목 안의 오답만, 오답노트에서 시작하면 전체 오답
         const subjectOnly = !overrideMode && quizSubject !== 'all';
-        pool = GLOSSARY_DATA.filter(t => (userState.wrongMap[t.id] || 0) > 0 && (!subjectOnly || t.category === quizSubject));
+        // 고른 '틀린 횟수' 이상 틀린 문제만 (오답노트 버튼 / 퀴즈 설정 각각의 선택값)
+        const minSel = document.getElementById(overrideMode ? 'wrong-note-min' : 'quiz-wrong-min');
+        const minCount = Math.max(1, Number(minSel && minSel.value) || 1);
+        pool = GLOSSARY_DATA.filter(t => (userState.wrongMap[t.id] || 0) >= minCount && (!subjectOnly || t.category === quizSubject));
         if (pool.length === 0) {
-          alert(subjectOnly ? "선택한 과목에는 오답노트에 저장된 문제가 없습니다! 과목을 '전체'로 바꿔 보세요." : "오답노트에 저장된 문제가 없습니다!");
+          if (minCount > 1) alert(`${minCount}회 이상 틀린 문제가 ${subjectOnly ? '선택한 과목에 ' : ''}없습니다! 틀린 횟수를 낮춰 보세요.`);
+          else alert(subjectOnly ? "선택한 과목에는 오답노트에 저장된 문제가 없습니다! 과목을 '전체'로 바꿔 보세요." : "오답노트에 저장된 문제가 없습니다!");
           return;
         }
       } else if (effectiveMode === 'clipped_only') {
@@ -4630,6 +4664,7 @@
         clearInterval(timerInterval);
         document.getElementById('quiz-play-panel').classList.add('hidden');
         document.getElementById('quiz-setup-panel').classList.remove('hidden');
+        refreshWrongMinSelects();
       }
     }
 
@@ -4736,6 +4771,7 @@
     }
 
     function restartQuizApp() {
+      refreshWrongMinSelects();
       document.getElementById('quiz-result-panel').classList.add('hidden');
       document.getElementById('quiz-setup-panel').classList.remove('hidden');
     }
@@ -4804,6 +4840,7 @@
     }
 
     function toggleWrongTypePicker() {
+      refreshWrongMinSelects();
       document.getElementById('wrong-type-picker').classList.toggle('hidden');
     }
 
