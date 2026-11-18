@@ -1,3 +1,10 @@
+# 2026-11-18 (2): 단답식 정답 추가 (용어명 · 영어 전체 이름 · 깃허브 코파일럿 한글 표기)
+
+- 용어명(term_ko)이 short_answers에 없던 3개에 용어명 추가: CSS Flexbox(56) 'CSS Flexbox', Claude Artifacts(11) 'Claude Artifacts', SSL / HTTPS(69) 'SSL / HTTPS'. 이제 100개 모두 용어명 그대로 입력하면 정답.
+- GitHub Copilot(12) short_answers에 한글 표기 추가: 깃허브/깃헙 코파일럿, 깃허브/깃헙 Copilot, GitHub 코파일럿.
+- 영어 전체 이름이 short_answers에 없던 용어에 term_en 전체와 괄호 앞 이름(괄호 안이 다른 이름인 경우 그 이름도) 추가. 단, 괄호 안이 'AI', 'bcrypt', 'RBAC', 'COUNT, SUM', 'Cmd+K / Ctrl+K'처럼 용어 자체가 아닌 것은 단독 정답으로 넣지 않음. 채점은 원래대로 띄어쓰기·대소문자 무시.
+- 서비스 워커 캐시 vibelearn-v18.
+
 # 2026-11-18: 오답 풀기 '틀린 횟수' 선택
 
 - 퀴즈 설정의 '❌ 오답 풀기'를 고르면 '틀린 횟수' 선택 목록(#quiz-wrong-min)이 나타나 n회 이상 틀린 문제만 출제(선택한 과목 기준).
