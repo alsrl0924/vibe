@@ -186,7 +186,7 @@
               <option value="name_en_asc">알파벳순 (A-Z)</option>
             </optgroup>
             <optgroup label="모아 보기">
-              <option value="clip_only">📌 클립한 용어만</option>
+              <option value="clip_only">📎 클립한 용어만</option>
               <option value="wrong_rank">❌ 틀린 용어만 (중요도순)</option>
               <option value="wrong_count">❌ 틀린 용어만 (많이 틀린 순)</option>
             </optgroup>
@@ -358,7 +358,7 @@
                 🔁 전체 한 바퀴
               </button>
               <button type="button" onclick="setQuizMode('clipped_only')" class="quiz-mode-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
-                📌 클립 문제
+                📎 클립 문제
               </button>
             </div>
             <div id="quiz-wrong-min-box" class="hidden flex items-center gap-2 pt-1">
@@ -594,12 +594,23 @@
             <i data-lucide="paperclip" class="w-6 h-6 text-amber-500"></i>
             <span>클립 보관함</span>
           </h2>
-          <p class="text-xs text-slate-500">용어사전이나 퀴즈에서 📌 클립한 용어가 모입니다. 다시 읽어 보거나 모아서 풀어 보세요.</p>
+          <p class="text-xs text-slate-500">용어사전이나 퀴즈에서 📎 클립한 용어가 모입니다. 다시 읽어 보거나 모아서 풀어 보세요.</p>
         </div>
-        <button id="solve-clipped-btn" onclick="startSolveClippedOnly()" class="self-start sm:self-auto flex-shrink-0 whitespace-nowrap px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+        <button id="solve-clipped-btn" onclick="toggleClippedTypePicker()" class="self-start sm:self-auto flex-shrink-0 whitespace-nowrap px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
           <i data-lucide="play" class="w-3.5 h-3.5"></i>
           <span>클립한 문제만 풀기</span>
         </button>
+      </div>
+
+      <!-- 클립한 문제만 풀기: 문제 형식 선택 -->
+      <div id="clipped-type-picker" class="hidden p-3 bg-white dark:bg-slate-900 rounded-2xl border border-amber-200 dark:border-amber-900 space-y-2">
+        <p class="text-xs font-bold text-slate-700 dark:text-slate-300">어떤 형식으로 풀까요?</p>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs sm:text-sm">
+          <button type="button" onclick="startSolveClippedOnly('mixed')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center hover:border-amber-400">⚡ 혼합 모드</button>
+          <button type="button" onclick="startSolveClippedOnly('choice')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center hover:border-amber-400">📋 4지선다</button>
+          <button type="button" onclick="startSolveClippedOnly('short')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center hover:border-amber-400">✍️ 단답식</button>
+          <button type="button" onclick="startSolveClippedOnly('ox')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center hover:border-amber-400">⭕❌ OX 스피드</button>
+        </div>
       </div>
 
       <div id="clipped-list-container" class="space-y-3"></div>
@@ -609,7 +620,7 @@
           <i data-lucide="paperclip" class="w-6 h-6"></i>
         </div>
         <h3 class="font-bold text-sm">클립한 용어가 없습니다.</h3>
-        <p class="text-xs text-slate-400">용어 카드나 퀴즈 화면 오른쪽 위의 📌 버튼을 누르면 여기에 모입니다.</p>
+        <p class="text-xs text-slate-400">용어 카드나 퀴즈 화면 오른쪽 위의 📎 버튼을 누르면 여기에 모입니다.</p>
       </div>
     </section>
 
@@ -4108,7 +4119,7 @@
         const noText = document.getElementById('no-results-text');
         const narrowed = currentCategory !== 'all' || currentSearchQuery;
         if (noText) {
-          if (currentSort === 'clip_only' && !narrowed) noText.innerText = "아직 클립한 용어가 없습니다. 카드 오른쪽 위 📌 버튼으로 클립해 보세요.";
+          if (currentSort === 'clip_only' && !narrowed) noText.innerText = "아직 클립한 용어가 없습니다. 카드 오른쪽 위 📎 버튼으로 클립해 보세요.";
           else if ((currentSort === 'wrong_rank' || currentSort === 'wrong_count') && !narrowed) noText.innerText = "아직 틀린 용어가 없습니다. 퀴즈를 풀면 틀린 용어가 여기에 모입니다.";
           else noText.innerText = "일치하는 용어가 없습니다.";
         }
@@ -4206,7 +4217,7 @@
         showToast("클립 문항에서 해제되었습니다.");
       } else {
         userState.clippedSet.add(termId);
-        showToast("📌 문항이 클립보관함에 저장되었습니다!");
+        showToast("📎 문항이 클립보관함에 저장되었습니다!");
       }
       saveUserData();
       renderCards();
@@ -4373,7 +4384,7 @@
         const subjectOnly = !overrideMode && quizSubject !== 'all';
         pool = GLOSSARY_DATA.filter(t => userState.clippedSet.has(t.id) && (!subjectOnly || t.category === quizSubject));
         if (pool.length === 0) {
-          alert(subjectOnly ? "선택한 과목에는 클립한 용어가 없습니다! 과목을 '전체'로 바꿔 보세요." : "클립한 용어가 없습니다! 용어 카드나 퀴즈 화면의 📌 버튼을 눌러 보세요.");
+          alert(subjectOnly ? "선택한 과목에는 클립한 용어가 없습니다! 과목을 '전체'로 바꿔 보세요." : "클립한 용어가 없습니다! 용어 카드나 퀴즈 화면의 📎 버튼을 눌러 보세요.");
           return;
         }
       } else {
@@ -4575,7 +4586,7 @@
         showToast("클립 문항에서 해제되었습니다.");
       } else {
         userState.clippedSet.add(term.id);
-        showToast("📌 문항이 클립보관함에 저장되었습니다!");
+        showToast("📎 문항이 클립보관함에 저장되었습니다!");
       }
       saveUserData();
       updateQuizClipBtn(term.id);
@@ -4928,6 +4939,7 @@
         container.innerHTML = '';
         emptyState.classList.remove('hidden');
         solveBtn.classList.add('hidden');
+        document.getElementById('clipped-type-picker').classList.add('hidden');
         return;
       }
 
@@ -4941,7 +4953,7 @@
               <span class="font-black text-sm text-slate-900 dark:text-slate-100">${escapeHtml(t.term_ko)}</span>
               <span class="text-xs font-mono text-slate-400">(${escapeHtml(t.term_en)})</span>
               <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
-                📌 클립됨
+                📎 클립됨
               </span>
             </div>
             <button onclick="toggleClip(${t.id})" class="text-xs text-rose-500 hover:underline">
@@ -4954,7 +4966,14 @@
       lucide.createIcons();
     }
 
-    function startSolveClippedOnly() {
+    function toggleClippedTypePicker() {
+      document.getElementById('clipped-type-picker').classList.toggle('hidden');
+    }
+
+    // 클립 탭에서 고른 형식으로 클립한 용어 전체 풀기 (퀴즈 설정의 문제 유형도 같이 바뀜)
+    function startSolveClippedOnly(type = quizType) {
+      document.getElementById('clipped-type-picker').classList.add('hidden');
+      setQuizType(type);
       switchTab('quiz');
       startCustomQuiz(null, 'clipped_only');
     }
