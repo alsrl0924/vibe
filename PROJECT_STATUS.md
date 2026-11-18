@@ -1,3 +1,7 @@
+# 2026-11-18 (3): 취약 핀셋 → 클립 문제
+
+- 퀴즈 출제 방식의 '🚨 취약 핀셋 (2회↑)'(weak)을 '📌 클립 문제'(clipped_only)로 교체하고 weak 코드 제거. 퀴즈 설정에서 고르면 선택한 과목 안의 클립 용어만, 클립 탭의 풀기 버튼은 전체 클립. 서비스 워커 캐시 vibelearn-v19.
+
 # 2026-11-18 (2): 단답식 정답 추가 (용어명 · 영어 전체 이름 · 깃허브 코파일럿 한글 표기)
 
 - 용어명(term_ko)이 short_answers에 없던 3개에 용어명 추가: CSS Flexbox(56) 'CSS Flexbox', Claude Artifacts(11) 'Claude Artifacts', SSL / HTTPS(69) 'SSL / HTTPS'. 이제 100개 모두 용어명 그대로 입력하면 정답.

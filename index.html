@@ -357,8 +357,8 @@
               <button type="button" onclick="setQuizMode('infinite')" class="quiz-mode-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
                 🔁 전체 한 바퀴
               </button>
-              <button type="button" onclick="setQuizMode('weak')" class="quiz-mode-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
-                🚨 취약 핀셋 (2회↑)
+              <button type="button" onclick="setQuizMode('clipped_only')" class="quiz-mode-btn p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">
+                📌 클립 문제
               </button>
             </div>
             <div id="quiz-wrong-min-box" class="hidden flex items-center gap-2 pt-1">
@@ -4262,7 +4262,7 @@
      */
     let quizSubject = 'all';
     let quizType = 'mixed'; // mixed, choice, short, ox
-    let quizMode = 'count_10'; // count_10, infinite, weak, wrong_only, clipped_only
+    let quizMode = 'count_10'; // count_10, infinite, wrong_only, clipped_only
     let activeQuizMode = 'count_10'; // 현재 진행 중인 퀴즈에 실제 적용된 출제 방식
     let answerLocked = false;        // 한 문제에 답이 두 번 채점되지 않도록 잠금
     let currentResolvedType = 'choice'; // 현재 문제 유형 (choice / short / ox)
@@ -4356,13 +4356,6 @@
       let pool = [];
       if (customPool) {
         pool = [...customPool];
-      } else if (effectiveMode === 'weak') {
-        // 누적 오답 2회 이상
-        pool = GLOSSARY_DATA.filter(t => (userState.wrongMap[t.id] || 0) >= 2);
-        if (pool.length === 0) {
-          alert("2회 이상 틀린 취약 문제가 아직 없습니다! 일반 퀴즈를 먼저 풀어보세요.");
-          return;
-        }
       } else if (effectiveMode === 'wrong_only') {
         // 퀴즈 설정에서 고르면 선택한 과목 안의 오답만, 오답노트에서 시작하면 전체 오답
         const subjectOnly = !overrideMode && quizSubject !== 'all';
@@ -4376,9 +4369,11 @@
           return;
         }
       } else if (effectiveMode === 'clipped_only') {
-        pool = GLOSSARY_DATA.filter(t => userState.clippedSet.has(t.id));
+        // 퀴즈 설정에서 고르면 선택한 과목 안의 클립만, 클립 탭에서 시작하면 전체 클립
+        const subjectOnly = !overrideMode && quizSubject !== 'all';
+        pool = GLOSSARY_DATA.filter(t => userState.clippedSet.has(t.id) && (!subjectOnly || t.category === quizSubject));
         if (pool.length === 0) {
-          alert("클립한 용어가 없습니다! 용어 카드나 퀴즈 화면의 📌 버튼을 눌러 보세요.");
+          alert(subjectOnly ? "선택한 과목에는 클립한 용어가 없습니다! 과목을 '전체'로 바꿔 보세요." : "클립한 용어가 없습니다! 용어 카드나 퀴즈 화면의 📌 버튼을 눌러 보세요.");
           return;
         }
       } else {
