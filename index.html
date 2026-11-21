@@ -573,6 +573,17 @@
         </div>
       </div>
 
+      <!-- 오답노트 정렬 · 틀린 횟수 필터 -->
+      <div id="wrong-list-tools" class="hidden flex flex-col sm:flex-row gap-2">
+        <select id="wrong-sort-select" onchange="setListSort('wrong', this.value)" class="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm rounded-xl px-3 py-2">
+          <option value="count">❌ 누적 오답 많은 순</option>
+          <option value="recent">🕒 최근에 틀린 순</option>
+          <option value="oldest">🕰️ 예전에 틀린 순</option>
+          <option value="alpha">🔤 알파벳순 (A-Z)</option>
+        </select>
+        <select id="wrong-list-min" onchange="renderWrongView()" class="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm rounded-xl px-3 py-2"></select>
+      </div>
+
       <div id="wrong-list-container" class="space-y-3"></div>
       
       <div id="empty-wrong-state" class="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 space-y-2">
@@ -611,6 +622,15 @@
           <button type="button" onclick="startSolveClippedOnly('short')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center hover:border-amber-400">✍️ 단답식</button>
           <button type="button" onclick="startSolveClippedOnly('ox')" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center hover:border-amber-400">⭕❌ OX 스피드</button>
         </div>
+      </div>
+
+      <!-- 클립 보관함 정렬 -->
+      <div id="clipped-list-tools" class="hidden">
+        <select id="clipped-sort-select" onchange="setListSort('clipped', this.value)" class="w-full sm:w-auto bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm rounded-xl px-3 py-2">
+          <option value="recent">🕒 최근 추가순</option>
+          <option value="oldest">🕰️ 오래된 추가순</option>
+          <option value="alpha">🔤 알파벳순 (A-Z)</option>
+        </select>
       </div>
 
       <div id="clipped-list-container" class="space-y-3"></div>
@@ -3799,6 +3819,8 @@
       clippedSet: new Set(), // Set of termId
       lastResultMap: {},     // { termId: 'correct' | 'wrong' } 오답노트 용어의 최근 풀이 결과
       recoveredSet: new Set(), // 틀렸다가 다시 맞힌 적 있는 용어
+      lastWrongAtMap: {},    // { termId: 마지막으로 틀린 시각(ms) } 오답노트 정렬용
+      clipAtMap: {},         // { termId: 클립한 시각(ms) } 클립 보관함 정렬용
       streakDays: 1,
       lastStudyDate: "",
       quizHistory: [],   // [ { date, subject, score, total, correct, wrongs } ]
@@ -3816,16 +3838,22 @@
         const parsed = raw ? JSON.parse(raw) : {};
         userState.lastResultMap = (parsed && typeof parsed.lastResultMap === 'object' && parsed.lastResultMap) || {};
         userState.recoveredSet = new Set(Array.isArray(parsed?.recoveredList) ? parsed.recoveredList : []);
+        userState.lastWrongAtMap = (parsed && typeof parsed.lastWrongAtMap === 'object' && parsed.lastWrongAtMap) || {};
+        userState.clipAtMap = (parsed && typeof parsed.clipAtMap === 'object' && parsed.clipAtMap) || {};
       } catch (e) {
         userState.lastResultMap = {};
         userState.recoveredSet = new Set();
+        userState.lastWrongAtMap = {};
+        userState.clipAtMap = {};
       }
     }
     function saveLocalExtras() {
       try {
         localStorage.setItem(localExtrasKey(), JSON.stringify({
           lastResultMap: userState.lastResultMap || {},
-          recoveredList: Array.from(userState.recoveredSet || [])
+          recoveredList: Array.from(userState.recoveredSet || []),
+          lastWrongAtMap: userState.lastWrongAtMap || {},
+          clipAtMap: userState.clipAtMap || {}
         }));
       } catch (e) {
         console.error(e);
@@ -4214,9 +4242,11 @@
       if (event) event.stopPropagation();
       if (userState.clippedSet.has(termId)) {
         userState.clippedSet.delete(termId);
+        delete userState.clipAtMap[termId];
         showToast("클립 문항에서 해제되었습니다.");
       } else {
         userState.clippedSet.add(termId);
+        userState.clipAtMap[termId] = Date.now();
         showToast("📎 문항이 클립보관함에 저장되었습니다!");
       }
       saveUserData();
@@ -4583,9 +4613,11 @@
       if (!term) return;
       if (userState.clippedSet.has(term.id)) {
         userState.clippedSet.delete(term.id);
+        delete userState.clipAtMap[term.id];
         showToast("클립 문항에서 해제되었습니다.");
       } else {
         userState.clippedSet.add(term.id);
+        userState.clipAtMap[term.id] = Date.now();
         showToast("📎 문항이 클립보관함에 저장되었습니다!");
       }
       saveUserData();
@@ -4686,6 +4718,7 @@
         // 틀렸을 때: 문제별 누적 오답 횟수 +1 증가 (오답노트에 계속 남음)
         userState.wrongMap[term.id] = (userState.wrongMap[term.id] || 0) + 1;
         userState.lastResultMap[term.id] = 'wrong';
+        userState.lastWrongAtMap[term.id] = Date.now();
         quizWrongItems.push({
           term: term,
           userAnswer: userSub,
@@ -4864,14 +4897,20 @@
         emptyState.classList.remove('hidden');
         solveBtn.classList.add('hidden');
         document.getElementById('wrong-type-picker').classList.add('hidden');
+        document.getElementById('wrong-list-tools').classList.add('hidden');
         return;
       }
 
       emptyState.classList.add('hidden');
       solveBtn.classList.remove('hidden');
 
-      const wrongTerms = GLOSSARY_DATA.filter(t => userState.wrongMap[t.id] > 0)
-        .sort((a, b) => (userState.wrongMap[b.id] || 0) - (userState.wrongMap[a.id] || 0));
+      const tools = document.getElementById('wrong-list-tools');
+      tools.classList.remove('hidden');
+      document.getElementById('wrong-sort-select').value = listSort.wrong;
+      const minSel = document.getElementById('wrong-list-min');
+      fillWrongMinSelect(minSel, 'all');
+      const listMin = Math.max(1, Number(minSel.value) || 1);
+      const wrongTerms = sortWrongTerms(GLOSSARY_DATA.filter(t => (userState.wrongMap[t.id] || 0) >= listMin));
 
       container.innerHTML = wrongTerms.map(t => `
         <div class="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
@@ -4900,12 +4939,46 @@
     }
 
     // 오답노트에서 직접 빼기 (사용자가 원할 때만 삭제)
+    // 오답노트 · 클립 보관함 정렬 (선택값은 이 기기에 기억)
+    const LIST_SORT_KEY = 'vibe_list_sort_v1';
+    let listSort = { wrong: 'count', clipped: 'recent' };
+    try { Object.assign(listSort, JSON.parse(localStorage.getItem(LIST_SORT_KEY) || '{}')); } catch (e) {}
+    function setListSort(list, value) {
+      listSort[list] = value;
+      try { localStorage.setItem(LIST_SORT_KEY, JSON.stringify(listSort)); } catch (e) {}
+      if (list === 'wrong') renderWrongView(); else renderClippedView();
+    }
+    const byAlpha = (a, b) => a.term_en.localeCompare(b.term_en, 'en', { sensitivity: 'base' });
+    function sortWrongTerms(terms) {
+      const cnt = t => userState.wrongMap[t.id] || 0;
+      const at = t => userState.lastWrongAtMap[t.id] || 0; // 시각 기록 전의 오답은 0 (가장 예전)
+      const mode = listSort.wrong;
+      return [...terms].sort((a, b) => {
+        if (mode === 'alpha') return byAlpha(a, b);
+        if (mode === 'recent') return (at(b) - at(a)) || (cnt(b) - cnt(a)) || a.rank - b.rank;
+        if (mode === 'oldest') return (at(a) - at(b)) || (cnt(b) - cnt(a)) || a.rank - b.rank;
+        return (cnt(b) - cnt(a)) || (at(b) - at(a)) || a.rank - b.rank;
+      });
+    }
+    function sortClippedTerms(terms) {
+      // 시각 기록 전에 클립한 용어는 저장된 클립 순서를 그대로 사용 (기록된 것보다 예전으로 취급)
+      const order = Array.from(userState.clippedSet);
+      const at = t => userState.clipAtMap[t.id] || (order.indexOf(t.id) + 1);
+      const mode = listSort.clipped;
+      return [...terms].sort((a, b) => {
+        if (mode === 'alpha') return byAlpha(a, b);
+        if (mode === 'oldest') return at(a) - at(b);
+        return at(b) - at(a);
+      });
+    }
+
     function removeFromWrongNote(termId) {
       const term = GLOSSARY_DATA.find(t => t.id === termId);
       if (!term) return;
       if (!confirm(`[${term.term_ko}]을(를) 오답노트에서 뺄까요?\n누적 오답 횟수 기록도 함께 지워집니다.`)) return;
       delete userState.wrongMap[termId];
       delete userState.lastResultMap[termId];
+      delete userState.lastWrongAtMap[termId];
       saveUserData();
       renderWrongView();
       renderCards();
@@ -4914,6 +4987,9 @@
 
     function toggleWrongTypePicker() {
       refreshWrongMinSelects();
+      // 목록에서 고른 '틀린 횟수'를 풀기 상자의 기본값으로
+      const listMin = document.getElementById('wrong-list-min');
+      if (listMin && listMin.value) document.getElementById('wrong-note-min').value = listMin.value;
       document.getElementById('wrong-type-picker').classList.toggle('hidden');
     }
 
@@ -4934,7 +5010,9 @@
       const solveBtn = document.getElementById('solve-clipped-btn');
       if (!container) return;
 
-      const clippedTerms = GLOSSARY_DATA.filter(t => userState.clippedSet.has(t.id));
+      const clippedTerms = sortClippedTerms(GLOSSARY_DATA.filter(t => userState.clippedSet.has(t.id)));
+      document.getElementById('clipped-list-tools').classList.toggle('hidden', clippedTerms.length === 0);
+      document.getElementById('clipped-sort-select').value = listSort.clipped;
       if (clippedTerms.length === 0) {
         container.innerHTML = '';
         emptyState.classList.remove('hidden');
@@ -5228,7 +5306,7 @@
       renderFlashSetup();
       window.VibeCloud.init({apply(data) {
         const p = window.VibeProgress.snapshot(data);
-        userState = {wrongMap:p.wrongMap,clippedSet:new Set(p.clippedList),lastResultMap:{},recoveredSet:new Set(),streakDays:p.streakDays,lastStudyDate:p.lastStudyDate,quizHistory:p.quizHistory,earnedBadges:new Set(p.earnedBadgeList)};
+        userState = {wrongMap:p.wrongMap,clippedSet:new Set(p.clippedList),lastResultMap:{},recoveredSet:new Set(),lastWrongAtMap:{},clipAtMap:{},streakDays:p.streakDays,lastStudyDate:p.lastStudyDate,quizHistory:p.quizHistory,earnedBadges:new Set(p.earnedBadgeList)};
         loadLocalExtras();
         checkStreak();
         saveUserData();
