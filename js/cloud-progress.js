@@ -135,5 +135,17 @@
   document.addEventListener('click',e=>{
     if(!ready && e.target.closest('main,nav,#vibe-google-login,#vibe-import-guest')) {e.preventDefault();e.stopImmediatePropagation();}
   },true);
-  window.VibeCloud={init,saved,storageKey:key};
+  // Read-only summary of the synced event log for display ordering. The record
+  // format is unchanged: wrong/clip events already carry their time ("at").
+  function eventTimes() {
+    const wrongAt={}, clipAt={};
+    if(!user || !ready)return {wrongAt,clipAt};
+    for(const e of Object.values(doc.events || {})) {
+      if(!e || !Number.isFinite(e.at) || !Number.isInteger(e.term))continue;
+      if(e.kind==='wrong' && e.delta>0 && e.at>(wrongAt[e.term]||0))wrongAt[e.term]=e.at;
+      if(e.kind==='clip' && e.value===true && e.at>(clipAt[e.term]||0))clipAt[e.term]=e.at;
+    }
+    return {wrongAt,clipAt};
+  }
+  window.VibeCloud={init,saved,storageKey:key,eventTimes};
 })();
