@@ -4949,9 +4949,16 @@
       if (list === 'wrong') renderWrongView(); else renderClippedView();
     }
     const byAlpha = (a, b) => a.term_en.localeCompare(b.term_en, 'en', { sensitivity: 'base' });
+    // 로그인 중이면 계정 동기화 기록에 남은 시각(다른 기기에서 틀리거나 클립한 시각 포함)도 함께 사용
+    function syncedTimes() {
+      try { return window.VibeCloud?.eventTimes?.() || { wrongAt: {}, clipAt: {} }; }
+      catch (e) { return { wrongAt: {}, clipAt: {} }; }
+    }
     function sortWrongTerms(terms) {
       const cnt = t => userState.wrongMap[t.id] || 0;
-      const at = t => userState.lastWrongAtMap[t.id] || 0; // 시각 기록 전의 오답은 0 (가장 예전)
+      const synced = syncedTimes().wrongAt;
+      // 이 기기 기록과 동기화 기록 중 더 늦은 시각. 둘 다 없으면 0 (가장 예전)
+      const at = t => Math.max(userState.lastWrongAtMap[t.id] || 0, synced[t.id] || 0);
       const mode = listSort.wrong;
       return [...terms].sort((a, b) => {
         if (mode === 'alpha') return byAlpha(a, b);
@@ -4963,7 +4970,8 @@
     function sortClippedTerms(terms) {
       // 시각 기록 전에 클립한 용어는 저장된 클립 순서를 그대로 사용 (기록된 것보다 예전으로 취급)
       const order = Array.from(userState.clippedSet);
-      const at = t => userState.clipAtMap[t.id] || (order.indexOf(t.id) + 1);
+      const synced = syncedTimes().clipAt;
+      const at = t => Math.max(userState.clipAtMap[t.id] || 0, synced[t.id] || 0) || (order.indexOf(t.id) + 1);
       const mode = listSort.clipped;
       return [...terms].sort((a, b) => {
         if (mode === 'alpha') return byAlpha(a, b);
